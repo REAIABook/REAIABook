@@ -1,11 +1,11 @@
 ---
 title: "Real Estate Analysis in the Information Age: Techniques for Big Data and Statistical Modeling"
 author: "Guide to Using the Code Supplied with the Book"
-date: "February 28, 2017"
+date: "June 11, 2017"
 output: html_document
 ---
 
-The examples and the case studies presented in this book are conducted in the R computing language.^[R Core Team (2017). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.]  All data and code are provided on this website or are downloaded free of charge from the internet.  The code for each chapter (found at XYZ.github.com) can be run to reproduce the examples and analyses that are found throughout the book.    
+The examples and the case studies presented in this book are conducted in the R computing language.^[R Core Team (2017). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL <https://www.R-project.org/>.]  All data and code are provided on this website or are downloaded free of charge from the internet.  The code for each chapter (found at <https://github.com/REAIABook/REAIABook>) can be run to reproduce the examples and analyses that are found throughout the book.    
 
 Before you start, you need to do two things.  
 
@@ -13,11 +13,7 @@ Before you start, you need to do two things.
 2.  Download RStudio from <https://www.rstudio.com/products/rstudio/download/.> and install.    
 Note that RStudio is not necessary but it is a helpful interactive development environment (IDE) that will make working with the provided R code easier.    
 
-Once you have downloaded and installed both, you should open RStudio and see a screen like this:    
-
-<!-- ![](images/rstudiostart.jpg) -->
-
-Once you have opened this can you move on to the code from the individual chapters. Do note that in many cases, code from one chapter depends on code and analyses performed in a previous chapter.  You should also set aside a directory on your computer where you can save the raw and intermediate data as well as the outputs from the graphing and modeling exercises.  You will need to manually input this directory into the code starting in chapter 4.     
+Once you have opened this can you move on to the code from the individual chapters. Do note that in many cases, code from one chapter depends on code and analyses performed in a previous chapter.  You should also set aside a directory on your computer where you can save the raw and intermediate data as well as the outputs from the graphing and modeling exercises.  You will need to manually input this directory into the code starting in chapter 5.     
 
 ## Introduction
 
@@ -37,13 +33,24 @@ In chapter 3, we install the necessary packages that we will use throughout this
 
 ```{r eval=FALSE}
 
+  install.packages('tidyverse')
   install.packages('sf')
-  install.packages('sp')  
+  install.packages('sp')
   install.packages('maptools')
   install.packages('rgeos')
-  install.packages('tidyverse')
+  install.packages('spgwr')
+  install.packages('spdep')
+  install.packages('geosphere')
+  install.packages('OpenStreetMap')
+  install.packages('gstat')
   install.packages('RODBC')
   install.packages('RSQLite')
+  install.packages('BMA')
+  install.packages('MASS')
+  install.packages('car')
+  install.packages('lmtest')
+  install.packages('plm')
+  install.packages('scales')
 
 ```
 
@@ -73,7 +80,7 @@ Next, we check to see if a sub-directory to store the raw zip files exists.  If 
 
 ```{r eval=FALSE}
 
-  if(!dir.exists(file.path(data.dir, 'raw_zip_files'))){
+  if (!dir.exists(file.path(data.dir, 'raw_zip_files'))){
     dir.create(file.path(data.dir, 'raw_zip_files'))
   }
 
@@ -84,13 +91,15 @@ We now check to see if the GIS shapefile of the Seattle Police Department Beat D
 ```{r eval=FALSE}
 
   # Check if file exists
-  if(!file.exists(file.path(data.dir, 'raw_zip_files', 'beats.zip'))){
+  if (!file.exists(file.path(data.dir, 'raw_zip_files', 'beats.zip'))){
   
-    # If not, download
+    # If it doesn't, then download
     download.file(url=paste0('https://data.seattle.gov/views/nnxn-434b/files/',
                          '96d998d4-ae20-4ea8-b912-436e68982a0d.zip'), 
                   destfile=file.path(data.dir, 'raw_zip_files', 'beats.zip'))
   }  
+ 
+
 ```
 
 We then check to see if a separate directory for the beats data exists.  If it doesn't we create it.  We then unzip the **beats.zip** file into the new *beats* directory.  
@@ -108,7 +117,7 @@ We then check to see if a separate directory for the beats data exists.  If it d
 
 ```
 
-Next, we create a separate sub-directory for the geographic data (if not already present) and then download the property parcel (cadastre) shapefile (if not done so in the past) and unzip it into the *geographic* sub-directory.  
+Next, we  download the property parcel (cadastre) shapefile (if not done so in the past).  We then create a separate sub-directory for the geographic data (if not already present) and then and unzip it into the *geographic* sub-directory.  
 
 ```{r eval=FALSE}
 
@@ -201,6 +210,37 @@ We then do the same for the parcel and the residential building (resbldg) inform
 
 ```
 
+We then add the crime report statisitics from the City of Seattle, downloading them into the 'crime' directory. 
+
+```{r eval=FALSE} 
+
+  # Create a directory for assessor data if one doesn't exist
+  if (!dir.exists(file.path(data.dir, 'crime'))){
+    dir.create(file.path(data.dir, 'crime'))
+  }
+  
+  # Download .csv from the City of Seattle
+  download.file(url=paste0('https://data.seattle.gov/api/views/7ais-f98f/rows.csv?',
+                           'accessType=DOWNLOAD'), 
+                destfile=file.path(data.dir, 'crime', 'seattle_crime.csv' ))
+
+```
+
+And finally, we download the pre-analyzed twitter sentiment data from the REAIABook Github site and place in the 'tweets' directory. 
+
+```{r eval=FALSE} 
+
+  # Create a directory for assessor data if one doesn't exist
+  if (!dir.exists(file.path(data.dir, 'tweets'))){
+    dir.create(file.path(data.dir, 'tweets'))
+  }
+  
+  # Download .csv from the City of Seattle
+  download.file(url=paste0('http://raw.githubusercontent.com/REAIABook/',
+                           'REAIABook/master/tweetSentiment.csv'), 
+                destfile=file.path(data.dir, 'tweets', 'sentimenttweets.csv' ))
+
+```
 
 ## Chapter 6
 
@@ -223,8 +263,8 @@ Next, the user must enter the directory where the data is stored, **data.dir** a
 
 ```{r eval=FALSE}
 
-  data.dir <- 'c:/temp/'
-  code.dir <- 'c:/code/REAIA_Book/'
+  data.dir <- 'c:/temp/'             # For Example
+  code.dir <- 'c:/code/REAIA_Book/'  # For Example
 
 ```
 
@@ -232,7 +272,7 @@ We load in a set of custom functions that have been developed to help with the d
 
 ```{r eval=FALSE}
 
- source(paste0(code.dir, 'custom_functions.R'))
+ source(file.path(code.dir, 'custom_functions.R'))
 
 ```
 
@@ -240,7 +280,7 @@ We also create a name and path for the database into which we'll integrate all o
 
 ```{r eval=FALSE}
 
-  sales.db <- file.path(data.dir, 'assessorData.db')
+  data.db <- file.path(data.dir, 'seattleCaseStudy.db')
 
 ```
 
@@ -251,445 +291,321 @@ To better manage the various assessor's data files -- the sales, parcel and resi
 ```{r eval=FALSE}
  
  ## Convert CSVs to SQLite
+
+ if (!file.exists(data.db)){
   
-  if(!file.exists(sales.db)){
-  
-    convertCSVtoSQLite(dataPathCurrent=file.path(data.dir, 'assessor'),
-                     dataPathNew = data.dir,
-                     newFileName = 'assessorData.db',
-                     fileNames=c('EXTR_RPSale.csv',
-                                 'EXTR_Parcel.csv',
-                                 'EXTR_Resbldg.csv'),
-                     tableNames = c('AllSales',
-                                    'Parcel',
-                                    'ResBldg'),
-                     overWrite=TRUE,
-                     verbose=TRUE,
-                     writeRowNames=FALSE)
+   convertCSVtoSQLite(dataPathCurrent=file.path(data.dir, 'assessor'),
+                      dataPathNew=data.dir,
+                      newFileName='seattleCaseStudy.db',
+                      fileNames=c('EXTR_RPSale.csv',
+                                  'EXTR_Parcel.csv',
+                                  'EXTR_Resbldg.csv'),
+                      tableNames=c('Sales',
+                                     'Parcel',
+                                     'ResBldg'),
+                      overWrite=TRUE,
+                      verbose=TRUE,
+                      writeRowNames=FALSE)
   }
 
 ```
 
-#### Adding Unique Identifiers
+#### Sales data unique identifiers
+
+In this section we create a set of unique identifiers for the sales data.  
 
-<!-- In this section we make a first pass through the sales transactions and eliminate sales that are obvious non-arms length transactions.   -->
+We start by opening a connection to the SQL database that we created above and reading in the raw sales information.
+
+```{r eval=FALSE}
+
+  # Set connection
+  db.conn <- dbConnect(dbDriver('SQLite'), data.db)
+  
+  # Read in sales data
+  sales.data <- dbReadTable(db.conn, 'Sales')
+
+```
+
+We then use a multiple step process to create a unique identifer field, based on the excise tax affidavit number.  We begin by creating a new field called **UID** that contains the excise tax number.  We then re-order the columns to put this value on the far left and then sort the data by the **UID** field.
+
+```{r eval=FALSE}
+
+  # Make new UID from ExciseTaxNbr
+  sales.data <- dplyr::mutate(sales.data, UID=ExciseTaxNbr)
+  
+  # Place Excise Tax Number on far left
+  sales.data <- dplyr::select(sales.data, UID, everything())
+
+  # Order by that field
+  sales.data <- dplyr::arrange(sales.data, UID)
+
+```  
+  
+As some of these numbers are duplicates due to multiple parcel (or property) sales, we must do a little more work to make this a unique identifier.  First, we create a separate data frame of those excise tax numbers that appear more than once.  
 
-<!-- We start by opening a connection to the SQL database that we created above and reading in the raw sales information. -->
+```{r eval=FALSE}
+  
+  uid.mult <- sales.data %>% 
+    dplyr::group_by(UID) %>%
+      dplyr::summarize(rec.count=n()) %>%
+       dplyr::filter(rec.count > 1)
+  
+```
 
-<!-- ```{r eval=FALSE} -->
+Second, we create a vector showing the count or number of times each of the duplicated UIDs appear.
 
-<!--   sales.conn <- dbConnect(dbDriver('SQLite'), sales.db) -->
-<!--   raw.sales <- dbReadTable(sales.conn, 'AllSales') -->
+```{r eval=FALSE}
 
-<!-- ``` -->
+  # Develop a list full of proper suffixes
+  uid.suffix <- lapply(split(uid.mult, uid.mult$UID), 
+                       function(x) 1:(x$rec.count))
+  names(uid.suffix) <- NULL
+  
+```
 
-<!-- We then remove all sales that are missing one of the two necessary components of the Parcel Identification Number (PIN), the key that is used to link sale records to information about the property characteristics found in the other data files. We save this filtered set of sales into a new object names **clean.sales**.  -->
+We then add these counts (suffix) to the sales data.  Those with a UID that is unique receive a 0. Finally, we add the suffix value to the original UID to make an actual unique identifier.  The suffix field is removed. 
 
-<!-- ```{r eval=FALSE} -->
+```{r eval=FALSE}
 
-<!--   clean.sales <- raw.sales[raw.sales$Major > 0, ] -->
+  # Apply suffix to sales.data
+  sales.data$uid.suffix <- 0
+  sales.data$uid.suffix[sales.data$UID %in% uid.mult$UID] <- unlist(uid.suffix)
+  
+  # Concatenate to make an unique ID
+  sales.data$UID <- ifelse(sales.data$uid.suffix == 0,
+                           sales.data$UID,
+                           paste0(sales.data$UID, '..', sales.data$uid.suffix))
+  
+  # Remove uid.suffix field
+  sales.data$uid.suffix <- NULL
 
-<!-- ``` -->
+```
 
-<!-- We then remove observations that have a sales price of \$0.  -->
+We write this data back to the database, removing the old table first. 
+  
+```{r eval=FALSE}
+  
+  dbRemoveTable(db.conn, 'Sales')
+  dbWriteTable(db.conn, 'Sales', sales.data, row.names=FALSE)
+  
+```
 
-<!-- ```{r eval=FALSE} -->
+#### Parcel and res bldg data unique identifiers
 
-<!--   clean.sales <- clean.sales[clean.sales$SalePrice > 0, ] -->
+Here we add unique identifiers to the King County Assessors parcel and residential building tabular data.  The unique identifiers (**pinx**) are simply an extension of the County's parcel identification numbers (PINs) where we add two leading '.'s in order to avoid dropped leading zeros in future uses. A custom function call **buildPinx()** is used to accomplish this.  Full code for the **buildPinx()** function can be found in the *custom_functions.R* file.
 
-<!-- ``` -->
+We start by reading the raw parcel tabular data, creating the **pinx** unique identifier and then writing it back to the database.  
 
-<!-- The date field in the raw data is not in a standardized format that is interpretable by the R language.  Here we deconstruct the existing date format and build it back into one that R can recognize. We then create a variable containing the new sales date (**salesDate**) and the new sales year (**salesYear**).  We also then remove those observations that are missing a sale date.  -->
+```{r eval=FALSE}
 
-<!-- ```{r eval=FALSE} -->
+  # Read in data
+  parcel.data <- dbReadTable(db.conn, 'Parcel')
+  
+  # Add unique pinx field
+  parcel.data <- buildPinx(parcel.data)
+  
+  # Write out
+  dbRemoveTable(db.conn, 'Parcel')
+  dbWriteTable(db.conn, 'Parcel', parcel.data, row.names=FALSE)
+  
+```
 
-<!--   # Build sales date -->
-<!--   clean.sales$docDate <- paste(substr(clean.sales$DocumentDate, 4, 5) -->
-<!--                               ,substr(clean.sales$DocumentDate, 1, 2), -->
-<!--                               substr(clean.sales$DocumentDate, 7, 10), sep="") -->
+We then do the same with the residential building tabular data. As some properties have more than one residential building a suffix is added here to indicate which building it is.  
 
-<!--   # Create new date and year variables -->
-<!--   clean.sales$salesDate <- as.POSIXct(strptime(clean.sales$docDate, "%d%m%Y")) -->
-<!--   clean.sales$salesYear <- as.numeric(format(clean.sales$salesDate, "%Y")) -->
+```{r eval=FALSE}
+  
+  # Read in data
+  resbldg.data <- dbReadTable(db.conn, 'ResBldg')
+  
+  # Add unique pinx field
+  resbldg.data <- buildPinx(resbldg.data)
+  
+  # Add the bldgnbr to complete unique id
+  resbldg.data$pinx <- paste0(resbldg.data$pinx, '.', resbldg.data$BldgNbr)
+  names(resbldg.data)[1] <- 'BldgID'
+  
+  # Write out
+  dbRemoveTable(db.conn, 'ResBldg')
+  dbWriteTable(db.conn, 'ResBldg', resbldg.data, row.names=FALSE)
 
-<!--   # Remove those missing the date -->
-<!--   clean.sales <- clean.sales[!is.na(clean.sales$salesDate), ] -->
+```
 
-<!-- ``` -->
+As we have loaded a number of large datasets, we clean our our working RAM here.
 
-<!-- Our study is limited to the 2011 to 2016 time period.  Below we eliminate sales outside of this range.  -->
+```{r eval=FALSE}
 
-<!-- ```{r eval=FALSE} -->
+  rm(resbldg.data); rm(parcel.data); rm(sales.data)
+  gc()
 
-<!--   clean.sales <- clean.sales[clean.sales$salesYear >= 2011 &  -->
-<!--                              clean.sales$salesYear <= 2016, ] -->
+```
 
-<!-- ``` -->
+#### Parcel Shapefile conversion
 
-<!-- The existing parcel identification numbers often contain leading zeroes.  While this naming convention is usually handled properly in R, it can cause problems when exporting to other format such as CSV or when using the data in software such as Excel.  To remedy this we convert the PINs into character fields and place two "." in front of the number to ensure that regardless of the software package used the value will be treated as text and not a number.  We call this new field **pinx** and have created a custom function, **buildPinx()** to accomplish this.  -->
+We now load in the parcel shapefile and convert it from a polygon to a point coverage.  We also change the coordinate reference system.  
 
-<!-- ```{r eval=FALSE} -->
+We start by loading the parcel shapefile from the King County GIS department into R as a simple features object (sf).
 
-<!--   clean.sales <- buildPinx(clean.sales) -->
+```{r eval=FALSE}
+  
+  parcels <- st_read(file.path(data.dir, 'geographic', 'parcel', 'parcel.shp'), 
+                     quiet=TRUE)
 
-<!-- ``` -->
+```
 
-<!-- A very small set of transactions show unusually high volumes, trading many times per year.  As it is likely that these do not represent arm's length transactions we remove any properties that have transacted five or more times during the five year study period.  A custom function, **buildTransCount** accomplished ths.  -->
+We then transform the coordinate reference system to match the other spatial data we will use later. 
 
-<!-- ```{r eval=FALSE} -->
+```{r eval=FALSE}
 
-<!--   clean.sales <- buildTransCount(clean.sales, transLimit=5) -->
+  parcels <- st_transform(parcels, 4326)
+  
+```
 
-<!-- ``` -->
+We then extract the centroid of each parcel polygon and conver this to a simple features data frame.  We add the parcel identification number to each point as the unique identifier. 
 
-<!-- Another small set of transactions involve the sale of multiple properties.  As this makes it difficult to divide up the proper price to each home, we eliminate these properties from consideration.  We employ a two-step process to do so.  First we create a new field called *multiParcel* by using a custom function, **idDup** that identifies and lables duplicate values. We then remove those observations that involve multiple parcel sales.  -->
+```{r eval=FALSE}
 
-<!-- ```{r eval=FALSE} -->
+  # Extract centroid Lat longs
+  parcel.centroids <- st_centroid(parcels)
+  
+  # Convert to a simple features data.frame
+  parcel.centroids <- st_sf(parcel.centroids)
+  
+  # Add PIN values
+  parcel.centroids$PIN <- parcels$PIN
+  
+```
 
-<!--   # Add MultiParcel sale designation -->
-<!--   clean.sales <- idDup(clean.sales, 'ExciseTaxNbr', newField = 'multiParcel', -->
-<!--                       iddType='labelNonUnique', binNonUq=TRUE) -->
+Finally, we save this object as an .Rdata file for faster loading in the future. 
 
-<!--   # Remove those with multiparcel -->
-<!--   clean.sales <- clean.sales[clean.sales$multiParcel == 0, ] -->
+```{r eval=FALSE}
+  
+  save(parcel.centroids, file=file.path(data.dir, 'geographic', 'parcelcentroids.Rdata'))
 
-<!-- ``` -->
+```
 
-<!-- Having removed instances of multiple parcel sales, we now add a unique identifier to each sale observation using the **buildSaleUIDs()** custom function.  -->
+#### Add in Crime Beat Data
 
-<!-- ```{r eval=FALSE} -->
+Now we load in the crime data and add it to the database.  
 
-<!--   clean.sales <- buildSaleUIDs(clean.sales) -->
+First we load the crime data from the .csv file downloaded from the City of Seattle.
 
-<!-- ``` -->
+```{r eval=FALSE}
 
-<!-- There are three field that contain labels from the King County Assessor office as to the appropriate-ness of the sale for use in valuation or price modeling.  These are: -->
+  crime.data <- read.csv(file.path(data.dir, 'crime', 'seattle_crime.csv'))
 
-<!-- 1. SaleReason: The listed reason for the sale -->
-<!-- 2. SaleInstrument: The type of transfer deed used in the sale -->
-<!-- 3. SaleWarning: A large set of warning flags that are applied to sales -->
+```
+  
+We then convert all of the field names to lower case and rename the unique identifier field to a simpler name, uid.  
+  
+```{r eval=FALSE}  
+  
+  # Convert to lower case
+  names(crime.data) <- tolower(names(crime.data))
+  
+  # Rename unique identifier
+  names(crime.data)[1] <- 'uid'
+  
+```
 
-<!-- More information on each of these can be found by examining the King County Assessors lookup table, available at: http:/aqua.kingcounty.gov/extranet/assessor/Lookup.zip -->
+We then write these data to the database, removing the existing table if necessary. 
+  
+```{r eval=FALSE}
 
-<!-- We clean the sales based on these three labeled fields using a three step process.  First we add blank spaces to both sides of the text field in the *SaleWarning* column to facilitate appropriate search processes.  Next, we create a list of the codes or lables which should be removed from each field.  Finally, we trim each field down based on these codes or labels using the **trimByField** custom function. -->
+  # Check if exists and remove
+  if(dbExistsTable(db.conn, 'Crime')){
+    dbRemoveTable(db.conn, 'Crime')
+  }
 
-<!-- ```{r eval=FALSE} -->
+  # Write to database
+  dbWriteTable(db.conn, 'Crime', crime.data, row.names=FALSE)
 
-<!--   # Fix the "Warning" Field.  Add a leading/trailing space for the grep() -->
-<!--   clean.sales$SaleWarning <- paste(" ", clean.sales$SaleWarning, " ", sep="") -->
+```
 
-<!--   # Compile a list of invalid codes or labels -->
-<!--   trim.list <- list(SaleReason=2:19,   -->
-<!--                     SaleInstrument=c(0, 1, 4:28), -->
-<!--                     SaleWarning=paste0(" ", c(1:2, 5:9, 11:14, 18:23, 25, 27, -->
-<!--                                               31:33, 37, 39, 43, 46, 48, 49, -->
-<!--                                               50:53, 59, 61, 63, 64, 66), " ")) -->
+#### Add Twitter sentiment data to database    
 
-<!--   # Trim observations with invalid codes or labels -->
-<!--   for(tL in 1:length(trim.list)){ -->
-<!--     clean.sales <- trimByField(clean.sales, names(trim.list)[tL], -->
-<!--                              trimList = unlist(trim.list[tL])) -->
-<!--   } -->
+We now add the twitter sentiment data (available from the REAIA Github site) to the database. 
 
-<!-- ``` -->
+First we load in the sentiment scored tweets directly from the Github site.  
 
-<!-- We finish this step of data cleaning by writing the remaining sales observations back to the database under the name **trimmedSales**.  To do so, we check if this table already exists, if so we delete the existing table in the database and then we write this table to the database.   -->
+```{r eval=FALSE}  
 
-<!-- ```{r eval=FALSE} -->
+ # Read in tweet sentiment data  
+  tweet.sent <- read.csv(file.path(data.dir, 'tweets', 'sentimenttweets.csv'),
+                         header=TRUE)
+  
+  # Remove if exists 
+  if (dbExistsTable(db.conn, 'SentimentTweets')){
+    dbRemoveTable(db.conn, 'SentimentTweets')
+  }
+  
+  # Write to database
+  dbWriteTable(db.conn, 'SentimentTweets', tweet.sent, row.names=FALSE)
 
-<!--   # Write out -->
-<!--   tExists <- dbExistsTable(sales.conn, 'trimmedSales') -->
+```
 
-<!--   if(tExists) { -->
-<!--     dbRemoveTable(sales.conn, 'trimmedSales') -->
-<!--   } -->
-<!--   dbWriteTable(sales.conn, 'trimmedSales', clean.sales, row.names=FALSE) -->
+#### Police Beat Spatial Data
 
-<!-- ``` -->
+Finally, we manage the Seattle Police Beat spatial data.
 
-<!-- #### Integrate Physical Characteristics -->
+We begin by reading in the police beat boundaries as a simple features polygon object. 
 
-<!-- In this section we add the land and structure information to the sales and, along the way, do a bit more cleaning of observations that do not meet our research question -- are not arm's length transactions of single family homes.  -->
+```{r eval=FALSE}  
 
-<!-- We start by reading in the parcel (land) and the residential building (structural) information from the database.  The data are stored in objects names **parcel.data** and **resbldg.data**, respectively. Note that when we read the data in we pass it through the **buildPinx()** function so that each dataset includes the proper key for joining later on.  -->
+  beats <- st_read(file.path(data.dir, 'beats', 'SPD_BEATS_WGS84.shp'), 
+                   quiet=TRUE)
 
-<!-- ```{r eval=FALSE} -->
+```
 
-<!--   # Parcel Data -->
-<!--   parcel.data <- buildPinx(dbReadTable(sales.conn, 'parcel')) -->
+We then transform the coordinate reference system.
 
-<!--   # Res Building data -->
-<!--   resbldg.data <- buildPinx(dbReadTable(sales.conn, 'resbldg')) -->
+```{r eval=FALSE}  
 
-<!-- ``` -->
+  beats <- st_transform(beats, 4326)
 
-<!-- We first add a field that indicates whether or not each of the sales has a corresponding record in the residential building file. -->
+```
 
-<!-- ```{r eval=FALSE} -->
+As we will work with other spatial packages in later analyses, we also convert simple features (sf) object to a an *sp* object (an earlier form of spatial handling in R). To this, we add the beat numbers as a unique identifier. 
+  
+```{r eval=FALSE}  
+  
+  # Convert to sp object
+  beats.sp <- as(beats, 'Spatial')
 
-<!--   clean.sales$res.record <- resbldg.data$BldgNbr[match(clean.sales$pinx, -->
-<!--                                               resbldg.data$pinx)] -->
+  # Add id and beat numbers
+  beats.sp@data$id <- paste0("ID", 1:nrow(beats.sp@data))
 
-<!--   clean.sales$res.record <- ifelse(is.na(clean.sales$res.record), 0, clean.sales$res.record) -->
+```
 
-<!-- ``` -->
+We then also convert the police beat coverage into a simple data frame format (fortified) that can be plotted in ggplot. This includes adding the beat identification code to the data frame. 
+  
+```{r eval=FALSE}  
 
-<!-- We remove those that do not.  -->
+  # Convert to a fortified object (data.frame)
+  beats.spf <- broom::tidy(beats.sp)
+  
+  # Add beat id
+  beats.spf$beat <- beats.sp@data$beat[match(beats.spf$id, 
+                                             beats.sp@data$id)]
+  
+```
 
-<!-- ```{r eval=FALSE} -->
+Finally, we save all three object types of the beat polygon data to an r workspace for easier loading later on. 
 
-<!--   clean.sales <- clean.sales[clean.sales$res.record == 1, ] -->
+```{r eval=FALSE}  
 
-<!-- ``` -->
+  save(beats, beats.sp, beats.spf, 
+       file= file.path(data.dir, 'geographic', 'beats.Rdata'))
 
-<!-- Next, we add the land use designation (*present.use*) to the sales data.  -->
+```
 
-<!-- ```{r eval=FALSE} -->
+We finish the manage stage of our analysis by closing the connection to the database. 
 
-<!--   clean.sales$present.use <- parcel.data$PresentUse[match(clean.sales$pinx, -->
-<!--                                                   parcel.data$pinx)] -->
+```{r eval=FALSE}  
 
-<!-- ``` -->
+  dbDisconnect(db.conn)
 
-<!-- We then remove those observation that are not single family detached or townhome dwellings (essentially eliminating duplexes, triplexes, etc. ) -->
+```
 
-<!-- ```{r eval=FALSE} -->
-
-<!--   clean.sales <- clean.sales[clean.sales$present.use == 2 | -->
-<!--                            clean.sales$present.use == 29, ] -->
-
-<!-- ``` -->
-
-<!-- We save this intermitten set of sales to the database, deleting the table if it already exists.  -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   # Check if existing -->
-<!--   tExists <- dbExistsTable(sales.conn, 'labeledSales') -->
-
-<!--   # If existing, remove -->
-<!--   if(tExists) { -->
-<!--     dbRemoveTable(sales.conn, 'labeledSales') -->
-<!--   } -->
-
-<!--   # Write table -->
-<!--   dbWriteTable(sales.conn, 'labeledSales', clean.sales, row.names=FALSE) -->
-
-<!-- ```   -->
-
-<!-- Before joining the parcel and residential building data to the sales, we trim down the fields to those we are likely to use in our final analysis.   -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   # Limit columns in parcel data -->
-
-<!--   parcel.data <- parcel.data[,c('pinx', 'Area', 'SubArea', 'CurrentZoning', -->
-<!--                                 'HBUAsIfVacant', 'PresentUse', 'SqFtLot',  -->
-<!--                                 'Topography', 'RestrictiveSzShape',  -->
-<!--                                 'MtRainier', 'Olympics', 'Cascades',  -->
-<!--                                 'Territorial', 'SeattleSkyline', 'PugetSound', -->
-<!--                                 'LakeWashington', 'LakeSammamish',  -->
-<!--                                 'SmallLakeRiverCreek', 'OtherView', -->
-<!--                                 'WfntLocation', 'WfntFootage', 'WfntBank', -->
-<!--                                 'TrafficNoise', 'Contamination')] -->
-
-<!--   # Limit Columns in Res Bldg  -->
-
-<!--   resbldg.data <- resbldg.data[,c('pinx', 'BldgNbr', 'NbrLivingUnits', -->
-<!--                                   'Stories', 'BldgGrade', 'SqFtTotLiving', -->
-<!--                                   'SqFtTotBasement', 'SqFtFinBasement', -->
-<!--                                   'SqFtGarageBasement', 'SqFtGarageAttached', -->
-<!--                                   'SqFtDeck', 'Bedrooms', 'BathHalfCount',  -->
-<!--                                   'Bath3qtrCount', 'BathFullCount', 'YrBuilt', -->
-<!--                                   'YrRenovated', 'Condition')] -->
-
-<!-- ``` -->
-
-<!-- To ensure that no multiple dwelling properties (two homes, one lot) are included in our analysis, we eliminate all residential dwelling records that have more than one structure on the property -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   # Order by building number -->
-<!--   resbldg.data <- resbldg.data[order(resbldg.data$BldgNbr), ] -->
-
-<!--   # Remove duplicates -->
-<!--   resbldg.data <- resbldg.data[!duplicated(resbldg.data$pinx), ] -->
-
-<!--   # Remove any oddities with building > 2 as the first building  -->
-<!--   resbldg.data <- resbldg.data[resbldg.data$BldgNbr == 1, ] -->
-
-<!-- ``` -->
-
-<!-- We then append both the parcel and then the residential building data to the sales observations.  The joining process represents an inner join, such that only observations the match from both datasets are maintained in the joined data.  -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   # Add parcel data to sales -->
-<!--   clean.sales <- merge(clean.sales, parcel.data, by='pinx') -->
-
-<!--   # Add res bldg data to sales -->
-<!--   clean.sales <- merge(clean.sales, resbldg.data, by='pinx') -->
-
-<!-- ``` -->
-
-<!-- ### Integrating Location Data -->
-
-<!-- In order to determine the absolute location of our observation as well as to assign Police Beat idenftification we need to add location data to our sales observations. We do this in two steps.  First we add latitude and longitude values from the King County GIS parcel shapefile.  Then we overlay the Seattle City Police Beat information on these points and assign each sale to a Beat.   -->
-
-<!-- We start by reading in the parcel polygon file that we downloaded and unzipped in Chapter 4. -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   parcels <- st_read(file.path(data.dir, 'geographic/parcel/parcel.shp'), -->
-<!--                      quiet=TRUE) -->
-
-<!-- ``` -->
-
-<!-- As this file is initially in a UTM coordinate reference systems (CRS) and does not have standard latitude and longitude values we convert it to an EPSG 4326 CRS.  -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   parcels <- st_transform(parcels, 4326) -->
-
-<!-- ``` -->
-
-<!-- Next, the parcel file contains polygon geometry.  For the purposes of this study we need point data, so we convert the parcels to points by taking the centroid value of each parcel.  We then extract these into longitude and latitude values and combine them into a data frame that has the parcel identification number (converted to *pinx*) as the longitude and latitude of every parcel in the county (**parcel.xy**). -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   # Extract centroid Lat longs -->
-<!--   parcel.centroids <- st_centroid(parcels) -->
-<!--   longs <- unlist(lapply(parcel.centroids, function(x) x[1])) -->
-<!--   lats <- unlist(lapply(parcel.centroids, function(x) x[2])) -->
-
-<!--   # Build a new data.frame -->
-<!--   parcel.xy <- data.frame(pinx=paste0('..', parcels$PIN), -->
-<!--                           longitude=longs, -->
-<!--                           latitude=lats) -->
-
-<!-- ``` -->
-
-<!-- We then limit this dataset to only those properties that are also located in the sales dataset.  -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   parcel.xy <- parcel.xy[parcel.xy$pinx %in% clean.sales$pinx, ] -->
-
-<!-- ``` -->
-
-<!-- Next we convert this aspatial data to a spatially explicit, *simple feature* object class in R.  To do so, we first convert it to a standard Spatial Points Data Frame, then convert to Simple Features and then change the CRS to EPSG 4326 so that the spatial coordinates are in standard latitude and longitude.  -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   # Convert to a spdf -->
-<!--   parcel.sp <- SpatialPointsDataFrame(coords=cbind(parcel.xy$longitude, -->
-<!--                                                    parcel.xy$latitude), -->
-<!--                                       data=parcel.xy,  -->
-<!--                                       proj4string=CRS("+init=epsg:4326")) -->
-
-<!--   # Convert to a simple feature object -->
-<!--   parcel.sf <- st_as_sf(parcel.sp) -->
-
-<!--   # Convert the CRS to lat/long -->
-<!--   parcel.sf <- transform(parcel.sf, 4326) -->
-
-<!-- ``` -->
-
-<!-- We now shift to preparing the Seattle Police Beats spatial data.  -->
-
-<!-- We start by reading in the Beats polygon shapefile that we downloaded and unzipped in Chapter 4. We also convert this to have an EPSG 4326 CRS.  -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--  # Read in the Police Beats Data -->
-<!--   beats <- st_read(file.path(data.dir, 'beats/SPD_BEATS_WGS84.shp'), -->
-<!--                    quiet=TRUE) -->
-
-<!--  # Transform the Coordinate Reference System   -->
-<!--   beats <- st_transform(beats, 4326) -->
-
-<!-- ```   -->
-
-<!-- A few of the polygons in the Beat shapefile are filler areas out over the water.  We remove these.  -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   beats <- beats[beats$first_prec != '', ] -->
-
-<!-- ``` -->
-
-<!-- Next, we overlay the Beat information onto the parcel point data.  This is a three step process.  First we add a new varialbe to the parcel points and set it to 'NONE'.  We then perform an intersect function which gives us a list of which parcels are in which beats.  Finally, we loop through each beat and assign the beat name to the parcel which fall in its jurisdiction.  -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   # Set null values -->
-<!--   parcel.sf$beat <- 'NONE' -->
-
-<!--   # Peform intersection -->
-<!--   beats.overlay <- st_intersects(beats, parcel.sf) -->
-
-<!--   # Extract intersection and add to parcel sf -->
-<!--   for(i in 1:length(beats.overlay)){ -->
-<!--    ov.id <- beats.overlay[[i]] -->
-<!--    parcel.sf$beat[ov.id] <- as.character(beats$beat[i]) -->
-<!--   } -->
-
-<!-- ``` -->
-
-<!-- Parcels that fall outside of the Beat area (outside of the City of Seattle) are then removed.  -->
-<!-- ```{r eval=FALSE} -->
-
-<!--   parcel.sf <- parcel.sf[parcel.sf$beat != "NONE", ]   -->
-
-<!-- ``` -->
-
-<!-- The parcel information -- complete with latitude, longitude and Beat name -- is added to the sales information.  Sales that do not match a parcel within the Beat area are dropped.  -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   final.sales <- merge(clean.sales,  -->
-<!--                        parcel.sf[ , c('pinx', 'beat', 'longitude', 'latitude')], -->
-<!--                        by='pinx') -->
-<!-- ``` -->
-
-<!-- Finally, we write this data out to the database under the name 'finalsales'. When we are finished writing the data we close the connection to the database.  -->
-
-<!-- ```{r eval=FALSE} -->
-
-<!--   # Test if already present -->
-<!--   tExists <- dbExistsTable(sales.conn, 'finalSales') -->
-
-<!--   # Remove if present -->
-<!--   if(tExists) { -->
-<!--     dbRemoveTable(sales.conn, 'finalSales') -->
-<!--   } -->
-
-<!--   # Write out -->
-<!--   dbWriteTable(sales.conn, 'finalSales', final.sales, row.names=FALSE) -->
-
-<!--   # Close Database connection -->
-<!--   dbDisconnect(sales.conn) -->
-
-<!-- ``` -->
-
-
-## Chapter 7
-
-## Chapter 8
-
-## Chapter 9
-
-## Chapter 10
-
-## Chapter 11
-
-## Chapter 12
-
-## Chapter 13
-
-## Chapter 14
-
-## Chapter 15
 
 
 
