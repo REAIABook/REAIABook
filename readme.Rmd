@@ -606,6 +606,2208 @@ We finish the manage stage of our analysis by closing the connection to the data
 
 ```
 
+## Chapter 7
+
+In chapter 7 we discuss data preparation.  In it we transform, integrate and filter our data.  
+
+We begin with a set of prelimnary commands.  Specifically, we load the necessary libraries, set our directory paths and load our custom functions.
+
+```{r eval=FALSE}  
+
+ ## Load Libraries
+
+  library(sf)
+  library(sp)
+  library(tidyverse)
+  library(RSQLite)
+  library(RODBC)
+  library(geosphere)
+  library(rgeos)
+  
+ ## Set data and code directory
+ 
+  data.dir <- 'c:/temp/'                      # For example
+  code.dir <- 'c:/code/research/REAIA_book/'  # For example
+  
+ ## Load custom source files
+  
+  source(paste0(code.dir, 'custom_functions.R'))  
+
+```
+
+We then set the path to our active database and establish a connection to it. 
+
+```{r eval=FALSE}  
+
+  # Specify path to database
+  data.db <- file.path(data.dir, 'seattleCaseStudy.db')
+
+  # Establish connection to database
+  db.conn <- dbConnect(dbDriver('SQLite'), data.db)
+ 
+
+```
+
+#### Preparing Sales Data
+
+We start the process by preparing the sales data.  First, we load the data from the database
+
+```{r eval=FALSE}  
+
+  sales.data <- dbReadTable(db.conn, 'Sales')
+  
+```
+
+First we filter out observations that are missing critical information; parcel identification numbers and sale prices.  Those with missing sale price or prices of 0 are usually non arm's length transactions which are not relevant to our analysis.  
+
+```{r eval=FALSE}  
+  
+  # Filter those missing PIN numbers
+  sales.data <- dplyr::filter(sales.data, Major > 0)
+  
+  # Filter those with sale price of 0
+  sales.data <- dplyr::filter(sales.data, SalePrice > 0)
+  
+```
+
+Next we perform a number of options of options to transform and then filter on the sale date.  We begin by re-ordering the sales date into a standard month/date/year format and then convert this to a 'date' data type within R.
+
+```{r eval=FALSE}  
+  
+  # Re-order date field
+  sales.data <- dplyr::mutate(.data=sales.data,
+                              doc.date = paste0(substr(DocumentDate, 4, 5),
+                                                 substr(DocumentDate, 1, 2),
+                                                 substr(DocumentDate, 7, 10)))
+  # Mutate new sale date field into R date format
+  sales.data <- dplyr::mutate(.data=sales.data,
+                              sales.date = as.Date(doc.date, "%d%m%Y"))
+  
+```
+
+Then we create a sales year field
+
+```{r eval=FALSE}  
+  
+  sales.data <- dplyr::mutate(.data=sales.data,
+                              sales.year = as.numeric(format(sales.date, "%Y")))
+  
+```
+
+Next, the extra date field that are no longer needed are removed.  
+
+```{r eval=FALSE}  
+
+  sales.data <- dplyr::mutate(.data=sales.data,
+                              doc.date = NULL)
+  sales.data <- dplyr::mutate(.data=sales.data,
+                              DocumentDate = NULL)
+
+```
+
+Sales which are missing sales dates are then filtered out. 
+  
+```{r eval=FALSE}  
+  
+  sales.data <- dplyr::filter(.data=sales.data,
+                              !is.na(sales.date))
+
+```
+
+Next, we limit the data to sales from the year 2016
+
+```{r eval=FALSE}  
+
+  sales.data <- dplyr::filter(.data=sales.data,
+                              sales.year == 2016)
+
+```
+
+We then add fields denoting the quarter of sales (Q1 to Q4) and the month of sale (1 to 12)
+
+```{r eval=FALSE}  
+
+  # Add qtr field 
+  sales.data$month <- as.numeric(substr(sales.data$sales.date, 6, 7))
+  
+  # Add month field
+  sales.data$qtr <- ((sales.data$month - 1) %/% 3) + 1
+  
+```
+
+We now turn to other transformation and filters.
+
+First, we convert the two-piece parcel identification number (PIN) into a single value, **pinX** that will link to the ID created for the geographical shapefile.  
+
+```{r eval=FALSE}  
+
+  sales.data <- buildPinx(X=sales.data)
+ 
+```
+
+Some property show an abnormally high number of transactions.  We filter out any property that has transacted more than five time during the study period. (For all custom functions see the *custom_functions.R* file.)
+
+```{r eval=FALSE}  
+
+  sales.data <- buildTransCount(x.sales=sales.data, 
+                                trans.limit=5)
+  
+```
+
+We then label and remove all transactions that include more than one parcel. 
+
+```{r eval=FALSE}  
+
+  # Mutate: Add MultiParcel sale designation (custom function)
+  sales.data <- idDup(x.data=sales.data, 
+                      x.field='ExciseTaxNbr', 
+                      new.field = 'multi.parcel',
+                      idd.type='labelNonUnique', 
+                      bin.nonuq=TRUE)
+  
+  # Filter those with multiparcel
+  sales.data <- dplyr::filter(.data=sales.data,
+                              multi.parcel == 0)
+  
+```  
+  
+Next, we create a new unique identifier that is transaction (and not property) related. This step occurs here instead of in the 'manage' section due to its dependency on the previous filter and transform activities.   
+  
+```{r eval=FALSE}  
+  
+  sales.data <- buildSaleUIDs(sales.data) 
+
+```
+
+The King County Assessor provides three labels for each transaction, one indicating the type of instrument (or document) used to transfer title, one listing the stated reason for the sale and one with a set of warning codes generated by the assessor. We will filter the sales data by each of these fields. 
+
+First, we add a set of leading and trailing spaces around the sale warning field to make parsing of the codes easier. 
+
+```{r eval=FALSE}  
+
+  sales.data <- dplyr::mutate(sales.data,
+                              SaleWarning = paste0(" ", SaleWarning, " "))
+
+```
+
+Next, we build a list containing the codes or values from each field that are to be filtered out.  We then loop through this list and remove the observations that match the filtered values in each field (using the custom **trimByField()** function).  
+
+```{r eval=FALSE}  
+
+
+  # Create a list of factors to eliminate  
+  trim.list <- list(SaleReason=2:19,  
+                    SaleInstrument=c(0, 1, 4:28),
+                    SaleWarning=paste0(" ", c(1:2, 5:9, 11:14, 18:23, 25, 27,
+                                              31:33, 37, 39, 43, 46, 48, 49,
+                                              50:53, 59, 61, 63, 64, 66), " "))
+  
+  # Loop through each factor type and filter accordingly (custom function)
+  for (tL in 1:length(trim.list)){
+    sales.data <- trimByField(x.data=sales.data, 
+                              x.field=names(trim.list)[tL],
+                              trim.list = unlist(trim.list[tL]))
+  }
+
+```
+
+Finally, we remove all of the unnecessary fields and rename the sale price field. 
+
+```{r eval=FALSE}  
+
+  # Transform:  Limit field names
+  sales.data <- dplyr::select(.data=sales.data, pinx, rec.ID, sale.ID, SalePrice, 
+                              sales.date, sales.year, month, qtr)
+  
+  
+  # Rename Sales Price field
+  sales.data <- dplyr::rename(.data=sales.data, sale.price=SalePrice)
+
+```
+
+#### Prepare Parcel and Res Bldg Data
+
+We now turn to preparing the parcel and residential building tabular data. 
+
+We begin by loading the parcel data from the database and then creating an identifier that will match with the sales and the geographic data, **pinx**.
+
+```{r eval=FALSE}  
+
+  # Load Parcel Data
+  parcel.data <- dbReadTable(db.conn, 'parcel')
+  
+  # Create Pinx Field
+  parcel.data <- buildPinx(parcel.data)
+  
+```
+
+We then do the same with the residential building data. 
+
+```{r eval=FALSE}  
+
+  # Load Res Building data
+  resbldg.data <- dbReadTable(db.conn, 'resbldg')
+  
+  # Create Pinx Field
+  resbldg.data <- buildPinx(resbldg.data)
+  
+```
+
+Next, we merge (integrate) the record type (property type) from the residential building data to the sales data.  We then convert this to a binary indicator, 1 if a residential sale, 0 if not. 
+
+```{r eval=FALSE}  
+  
+  # Integrate the record type (Whether or not Residential) (Labeling)
+  sales.data$res.record <- resbldg.data$BldgNbr[match(sales.data$pinx,
+                                                      resbldg.data$pinx)]
+  
+  # Mutate the integrated field to binary
+  sales.data$res.record <- ifelse(is.na(sales.data$res.record), 
+                                  0, 
+                                  sales.data$res.record)
+
+```  
+
+We then remove all sales that are not residential and then remove the binary field just created. 
+
+```{r eval=FALSE}  
+  
+  # Filter those with non-residential record type or with more than one dwelling on it  
+  sales.data <- dplyr::filter(.data=sales.data,
+                              res.record == 1)
+  
+  # Mutate:  Remove Res.record field
+  sales.data <- dplyr::mutate(.data=sales.data, res.record = NULL)
+  
+```
+
+The specific property use is then merged to the sale data from the parcel data file.  
+
+```{r eval=FALSE}  
+
+  sales.data$present.use <- parcel.data$PresentUse[match(sales.data$pinx,
+                                                   parcel.data$pinx)]
+
+```
+
+We remove all sales that have no present use code and those that are not detached single family (2) or townhouse (29). 
+
+```{r eval=FALSE}  
+
+  # Filter those with no present use
+  sales.data <- dplyr::filter(.data=sales.data,
+                              !is.na(present.use))
+  
+  # Filter those not with SFR or Townhome use category
+  sales.data <- dplyr::filter(.data=sales.data,
+                              present.use == 2 | present.use == 29)
+
+```  
+
+We start by limiting the parcel data to only those fields which we need and then renaming the fields.
+
+```{r eval=FALSE}  
+
+  # Transform:  Remove unneccessary fields
+  parcel.data <- parcel.data[,c('pinx', 'CurrentZoning', 'SqFtLot', 
+                                'Topography', 'RestrictiveSzShape', 
+                                'MtRainier', 'Olympics', 'Cascades', 
+                                'Territorial', 'SeattleSkyline', 'PugetSound',
+                                'LakeWashington', 'LakeSammamish', 
+                                'SmallLakeRiverCreek', 'OtherView',
+                                'WfntLocation', 'WfntFootage', 'WfntBank',
+                                'TrafficNoise')]
+  
+  # Transform: Change field names
+  names(parcel.data) <- c('pinx', 'zoning', 'lot.size', 'topo', 'restr.szshp',
+                          'view.rainier', 'view.olympics', 'view.cascades',
+                          'view.terr', 'view.city', 'view.puget', 
+                          'view.lkwash', 'view.lksamm', 'view.smwater',
+                          'view.other', 'wfnt', 'wfnt.ftg', 'wfnt.bank',
+                          'traffic.noise')
+  
+```
+
+We then do the same for the residential building data
+
+```{r eval=FALSE}  
+
+  # Transform: Remove unnecessary fields 
+  resbldg.data <- resbldg.data[,c('pinx', 'NbrLivingUnits', 'BldgNbr', 
+                                  'Stories', 'BldgGrade', 'SqFtTotLiving',
+                                  'SqFtFinBasement',
+                                  'SqFtGarageBasement', 'SqFtGarageAttached',
+                                  'SqFtDeck', 'Bedrooms', 'BathHalfCount', 
+                                  'Bath3qtrCount', 'BathFullCount', 
+                                  'YrBuilt',
+                                  'YrRenovated', 'Condition')]
+  
+  # Transform: Change field names
+  names(resbldg.data) <- c('pinx', 'nbr.lu', 'bldg.nbr', 'stories',
+                           'bldg.grade', 'tot.sf', 'bsmt.sf',
+                           'gar.bsmt.sf', 'gar.att.sf', 'deck.sf',
+                           'beds', 'bath.half', 'bath.75', 'bath.full',
+                           'yr.built', 'yr.ren', 'condition')
+
+```
+
+Next, we perform a number of preparation exercises on the residential building data.
+
+First, we sort the data by the individual building number, remove any properties with more than one building and then remove any remains observations that do not indicate the primary building (data error). We finish by removing the buildling number field.
+
+```{r eval=FALSE}  
+
+  # Sort by building number
+  resbldg.data <- dplyr::arrange(.data=resbldg.data,
+                                bldg.nbr)
+
+  # Remove those with more than one building 
+  resbldg.data <- dplyr::filter(.data=resbldg.data,
+                                !duplicated(pinx))
+  
+  # Remove remaining observations with buliding number not 1
+  resbldg.data <- dplyr::filter(.data=resbldg.data,
+                                bldg.nbr == 1)
+  
+  # Remove building number field
+  resbldg.data <- dplyr::mutate(.data=resbldg.data,
+                                 bldg.nbr = NULL)
+
+```
+
+Next, we create a new field the totals up the three bathrooms fields. We then remove the partial bath fields. 
+
+```{r eval=FALSE}  
+
+  # Create total baths
+  resbldg.data <- dplyr::mutate(.data=resbldg.data,
+                                baths = bath.full + bath.75 * .75 + bath.half * .5)
+  
+  # Remove partial bath fields
+  resbldg.data <- dplyr::mutate(.data=resbldg.data,
+                                bath.full = NULL)
+  resbldg.data <- dplyr::mutate(.data=resbldg.data,
+                                bath.75 = NULL)
+  resbldg.data <- dplyr::mutate(.data=resbldg.data,
+                                bath.half = NULL)
+  
+```
+
+#### Integrate Sales with Parcel and ResBldg data   
+  
+First we join the parcel data to the sales data based on the pinx field.  
+
+```{r eval=FALSE}  
+
+  # Join parcel data to sales (inner join)
+  sales.data <- dplyr::inner_join(x=sales.data, 
+                                  y=parcel.data, 
+                                  by='pinx')
+
+```
+
+Then we join the residential building data to the sales data based on the pinx field.  
+
+```{r eval=FALSE}  
+
+  # Join res bldg data to sales (inner join)
+  sales.data <- dplyr::inner_join(x=sales.data, 
+                                  y=resbldg.data, 
+                                  by='pinx')
+
+```
+
+After the integration we continue with transformation and filtering.
+
+First we create a home age variable by subtracting the year built from the sale year.  We then filter out all homes built after the year of sale (land sales) and then remove the year built field. 
+
+```{r eval=FALSE}  
+
+  # Mutate: Create Age variable
+  sales.data <- dplyr::mutate(.data=sales.data,
+                              age=sales.year - yr.built)
+  
+  # Filter: Remove those built after the sale
+  sales.data <- dplyr::filter(.data=sales.data,
+                              age >= 0)
+  
+  # Remove Yr.Built field
+  sales.data <- dplyr::mutate(.data=sales.data,
+                              yr.built=NULL)
+
+```
+
+Similarly, we create a renovated age field by subtracting the year of renovation from the year of sale and remove any sale with a major renovation after the sale date. 
+    
+```{r eval=FALSE}  
+    
+  # Create years since renovation
+  sales.data <- dplyr::mutate(.data=sales.data,
+                              age.renov = sales.year - yr.ren)
+  
+  # Filter: Remove those renovated after the sale
+  sales.data <- dplyr::filter(.data=sales.data,
+                              age.renov >= 0)
+
+```
+
+We then take the lesser of two, the regular age and the renovated age to create the effective age of the dwelling. After doing this we remove the now unnecessary renovated age and renovation year field. 
+
+```{r eval=FALSE}  
+
+  # Mutate: Create effective age field
+  sales.data$eff.age <- ifelse(sales.data$age.renov < sales.data$age,
+                               sales.data$age.renov,
+                               sales.data$age)
+
+
+  # Remove Age.renov field
+  sales.data <- dplyr::mutate(.data=sales.data,
+                              age.renov=NULL)
+  
+  # Remove Yr.Ren field
+  sales.data <- dplyr::mutate(.data=sales.data,
+                              yr.ren=NULL)
+  
+```
+
+Finally, we filter out all sales with more than one living unit (duplexes, triplexes, etc.) and then remove the field giving the count of living units. 
+
+```{r eval=FALSE}  
+
+  # Filter: Remove those with more than one land use
+  sales.data <- dplyr::filter(.data=sales.data,
+                              nbr.lu == 1)
+  
+  # Remove Nbr.lu field
+  sales.data <- dplyr::mutate(.data=sales.data,
+                              nbr.lu=NULL)
+
+```  
+
+### Integrate Sales and Geospatial Data  
+
+Before integration, we perform a few basic transformation and filtering steps on the geospatial data.
+
+We start by loading the parcel centroids object we created in the manage step.
+
+```{r eval=FALSE}  
+
+  load(file= file.path(data.dir, 'geographic/parcelcentroids.Rdata'))
+
+```
+
+We then create a **pinx** field to join with the sales data. After doing so we remove the unnecessary **PIN** field. 
+
+```{r eval=FALSE}  
+
+  # Mutate:  Add pinx field for joining
+  parcel.centroids$pinx <- paste0('..', parcel.centroids$PIN)
+  
+  # Remove unnecessary fields
+  parcel.centroids$PIN <- NULL
+
+```
+
+Next, we filter the parcel centroid file to include only those parcels that match with a sale.
+
+```{r eval=FALSE}  
+
+  parcel.centroids <- dplyr::filter(parcel.centroids, pinx %in% sales.data$pinx)
+
+```
+
+Now we prepare the police beat data.  
+
+First we load the workspace with the three different police beat objects.
+
+```{r eval=FALSE}  
+
+  load(file=file.path(data.dir, 'geographic/beats.Rdata'))
+
+```
+
+To begin, we filter out all beats areas that do not have a precinct ID (water areas)
+
+```{r eval=FALSE}  
+
+  beats <- dplyr::filter(beats, first_prec != '')
+
+```
+
+Next, we calculate the areal extent (in square miles) of each beat area.  We do this by extracting a list of the polygon objects, calculating the raw area for each and then converting it to square miles (approx.)
+
+```{r eval=FALSE}  
+
+  # Extract polygon objects
+  beat.polys <- beats.sp@polygons
+  
+  # Extract area measurement from the shapefile
+  poly.area <- unlist(lapply(beat.polys, function(x) x@area))
+  
+  # Convert to square miles
+  poly.area <- poly.area * (68.99 ^ 2)
+
+```  
+  
+We then add these areal measurements to the beats sp object.  
+  
+```{r eval=FALSE}  
+
+  beats.sp@data$size <- poly.area
+
+```  
+
+Then we write the three beat objects back to an R workspace for future analysis.
+  
+```{r eval=FALSE}  
+
+  save(beats, beats.sp, beats.spf, 
+       file= file.path(data.dir, 'geographic/beats.Rdata'))
+
+```
+
+Now we integrate the beat and centroid data to the sales.  
+
+We start by integrating the beat and the parcel data.  We do this by joining the beat code to the parcel centroid data. First we set the parcel centroid beat to 'NONE'.  
+
+```{r eval=FALSE}  
+  
+  parcel.centroids$beat <- 'NONE'
+
+```
+
+Then we run an intersect (overlay or spatial join) operation that assigns parcel centroid references to each beat.
+
+```{r eval=FALSE}  
+
+  beats.overlay <- st_intersects(beats, parcel.centroids)
+
+```
+
+Next, we loop through each beat and assign the beat code to the parcels that fall within that beat. 
+
+```{r eval=FALSE}  
+  
+  # Loop through each beat
+  for (i in 1:length(beats.overlay)){
+    
+    # Extract the refenence IDs
+    ov.id <- beats.overlay[[i]]
+    
+    # Apply relevant beat name
+    parcel.centroids$beat[ov.id] <- as.character(beats$beat[i])
+
+  }
+
+```
+
+Finally, we remove the parcel centroids that are not within one of the beats (not within the City of Seattle).
+
+```{r eval=FALSE}  
+
+  parcel.centroids <- dplyr::filter(parcel.centroids, beat != "NONE")
+
+```
+
+Next we extract the latitude and longitude values from the jointly held lat/long field in the parcel centroid data and add them to their own separate fields.  
+
+```{r eval=FALSE}  
+
+  # Transform: Create Separate Lat/long Columns 
+  parcel.centroids$longitude <- unlist(lapply(parcel.centroids$parcel.centroids, function(x) x[1]))
+  parcel.centroids$latitude <- unlist(lapply(parcel.centroids$parcel.centroids, function(x) x[2]))
+
+```  
+    
+We then save the parcel centroid data to a new R workspace for future use. 
+
+```{r eval=FALSE}  
+
+  save(parcel.centroids, 
+       file= file.path(data.dir, 'geographic/parcelcentroids_sales.Rdata'))
+
+```
+
+Now we integrate (join) the sales data and the parcel centroid data by the **pinx**.  We do an inner join here so that only those observations with **pinx** in both the sales and the parcel centroids are retained. 
+
+```{r eval=FALSE}  
+
+  sales.data <- merge(sales.data, 
+                      parcel.centroids[ , c('pinx', 'beat', 'longitude', 'latitude')],
+                      by='pinx')
+
+```
+
+Now that we have limited the sales to the City of Seattle only, we re-classify the sales data zoning variables into five simple classes. 
+
+```{r eval=FALSE}  
+
+  sales.data$zoning[grep('LR1', sales.data$zoning)] <- 'LR1'
+  sales.data$zoning[grep('LR2', sales.data$zoning)] <- 'LR2'
+  sales.data$zoning[grep('LR3', sales.data$zoning)] <- 'LR3'
+  sales.data$zoning[grep('NC', sales.data$zoning)] <- 'Comm'
+  sales.data$zoning[grep('C1', sales.data$zoning)] <- 'Comm'
+  sales.data$zoning[grep('MR', sales.data$zoning)] <- 'Other'
+  sales.data$zoning[grep('RSL', sales.data$zoning)] <- 'Other'
+  sales.data$zoning[grep('NR', sales.data$zoning)] <- 'Other'
+
+```
+
+#### Prepare Crime Data
+
+We begin by reading in the crime data from the database.
+
+```{r eval=FALSE}  
+
+  crime.data <- dbReadTable(db.conn, 'Crime')
+
+```
+
+Next, we fix the formatting on the date and time field.  
+
+First, we extract just the date values and convert to the R date format.
+
+```{r eval=FALSE}  
+
+ ## Transform date and time fields  
+  
+  # Extract date only from time/date field
+  crime.data <- dplyr::mutate(.data=crime.data,
+                              crime.date = as.Date(substr(
+                                occurred.date.or.date.range.start, 1, 10), '%m/%d/%Y'))
+
+```
+
+We then extract the time of the reported crime and convert to a 24 hour format.
+
+```{r eval=FALSE}  
+                              
+  # Extract time from time+date field                           
+  crime.data <- dplyr::mutate(.data=crime.data,
+                              crime.time = substr(
+                                occurred.date.or.date.range.start, 12, 20))
+  
+  # Convert to fractional hours  
+  crime.data$crime.time <- as.numeric(substr(crime.data$crime.time,1,2)) + 
+                         as.numeric(substr(crime.data$crime.time,4,5))/60
+  
+  # Convert Am and PM to 24 hour time
+  crime.data$crime.time <- ifelse(substr(crime.data$occurred.date.or.date.range.start, 
+                                   21, 21) == 'A', 
+                            crime.data$crime.time,
+                            crime.data$crime.time + 12)
+  
+  # Fix issues of 12Am being 24+ hours
+  crime.data$crime.time <- ifelse(crime.data$crime.time >=24, 
+                            crime.data$crime.time - 24, 
+                            crime.data$crime.time)
+  
+```
+
+We then convert the crime date field to the R date format.
+
+```{r eval=FALSE}  
+
+  crime.data$crime.date <- as.Date(crime.data$crime.date)
+
+```
+
+Next, we re-classify the crime types from the 29 large categories into four: violent, property, behavior and traffic.  All smaller categories are considered other.  
+
+```{r eval=FALSE}  
+
+  # Create Crime Groups
+  violent <- c('ASSAULT', 'HOMICIDE', 'ROBBERY', 'WEAPON')
+  property <- c('BIKE THEFT', 'BURGLARY', 'CAR PROWL', 'ILLEGAL DUMPING', 'MAIL THEFT',
+                'OTHER PROPERTY', 'PICKPOCKET', 'PROPERTY DAMAGE', 'PURSE SNATCH', 
+                'SHOPLIFTING', 'STOLEN PROPERTY', 'THEFT OF SERVICES', 'VEHICLE THEFT')
+  behavior <- c('DISPUTE', 'DISORDERLY CONDUCT', 'DISTURBANCE', 'LIQUOR VIOLATION', 
+                'LOITERING', 'NARCOTICS', 'PROSTITUTION', 'PUBLIC NUISANCE', 'THREATS',
+                'TRESPASS')
+  traffic <- c('TRAFFIC', 'DUI')
+  
+  # Assign new groups
+  crime.data$crime.type <- 'other'
+  crime.data$crime.type[crime.data$summarized.offense.description %in% 
+                          violent] <- 'violent'
+  crime.data$crime.type[crime.data$summarized.offense.description %in% 
+                          property] <- 'property'
+  crime.data$crime.type[crime.data$summarized.offense.description %in% 
+                          behavior] <- 'behavior'
+  crime.data$crime.type[crime.data$summarized.offense.description %in% 
+                          traffic] <- 'traffic'
+ 
+```
+
+#### Integrate Crime and Sales Data
+
+Next, we integrate the crime and sales data. 
+
+We start by limiting the crime date to reported incidents in 2015 or later.
+
+```{r eval=FALSE}  
+
+  crime.data <- crime.data[crime.data$year >= 2015, ]
+
+```
+
+Then we take each sale, count the number of reported crime (and of what type) that occurred within 400 meters of the property and happened in the year prior to the sale of the property.  This is a multiple step operation and can be quite slow on machines with limited computing power.  
+
+We start by setting the distance threshold to 400 meters.
+
+```{r eval=FALSE}  
+
+  dist.thres <- 400
+
+```
+
+Then we set the value of nearby crime counts for all sales to 0 for each crime type.
+
+```{r eval=FALSE}  
+
+  sales.data$crime.violent <- 0
+  sales.data$crime.property <- 0
+  sales.data$crime.traffic <- 0
+  sales.data$crime.behavior <- 0
+  sales.data$crime.other <- 0
+
+```
+
+Next we start a loop through each sale
+
+```{r eval=FALSE}  
+
+  for (j in 1:nrow(sales.data)){
+
+```
+
+We extract the individual sale, calculate the difference in days between each crime incident and limit to the crime within the one year prior window.
+
+```{r eval=FALSE}  
+
+    # Extract sales data
+    j.data <- sales.data[j,]
+    
+    # Calculate time difference
+    x.days <- j.data$sales.date - crime.data$crime.date
+    
+    # Limit crime data to time window
+    c.data <- crime.data[x.days > 0 & x.days < 365, ]
+
+```
+
+We then calculate the distance between all of these crimes and the sale and then limit to those within the threshold (400m or 1/4 mile)
+
+```{r eval=FALSE}  
+
+    # Calculate distances
+    j.dist <- distHaversine(j.data[,c('longitude', 'latitude')],
+                            c.data[,c('longitude', 'latitude')])
+
+    # Limit data to those within threshold
+    cx.data <- c.data[j.dist < dist.thres, ]
+
+```
+
+We then add a count of each crime type to the sale observation
+
+```{r eval=FALSE}  
+
+    sales.data$crime.violent[j] <- length(which(cx.data$crime.type == 'violent'))
+    sales.data$crime.property[j] <- length(which(cx.data$crime.type == 'property'))
+    sales.data$crime.behavior[j] <- length(which(cx.data$crime.type == 'behavior'))
+    sales.data$crime.traffic[j] <- length(which(cx.data$crime.type == 'traffic'))
+    sales.data$crime.other[j] <- length(which(cx.data$crime.type == 'other'))
+
+```
+
+After every 100 sales complete we output the progress (this could be removed from code it will not impact performance)
+
+```{r eval=FALSE}  
+
+    if (j %% 100 == 0){
+      cat('record number ', j, '\n')
+    }
+
+```
+
+We close the loop
+
+```{r eval=FALSE}  
+
+  }
+
+```
+
+#### Prepare Sentiment Tweets
+
+We now prepare the sentiment tweet data
+
+First we load in from the database
+
+```{r eval=FALSE} 
+ 
+  tweet.data <- dbReadTable(db.conn, 'SentimentTweets')
+
+```
+
+Next, we limit the tweet to those within City of Seattle
+
+First we create a boundary file for the City of Seattle by dissolving (or unary unioning) the police beats.
+
+```{r eval=FALSE}  
+
+  seattle.bound <- gUnaryUnion(beats.sp)
+
+```
+
+We then convert the tweets to a SpatialPointsDataFrame, with the correct coordinate reference system.
+
+```{r eval=FALSE}  
+
+  tweet.sp <- SpatialPointsDataFrame(cbind(tweet.data$longitude, tweet.data$latitude),
+                                     data=tweet.data)
+  proj4string(tweet.sp) <- CRS(proj4string(beats.sp))
+
+```
+
+Next, we intersect the two in order to determine which tweets fall within the city of Seattle.  We then limit the data to those tweets within Seattle city limits. 
+
+```{r eval=FALSE}  
+
+  # Clip by city boundary
+  in.seattle <- gIntersects(tweet.sp, seattle.bound, byid=T)
+  
+  # Filter to those in city
+  tweet.sp <- tweet.sp[which(in.seattle), ]
+
+```
+
+The sentiment score are integer values ranging from -5 to 5, based on their sentiment.  For the purposes of judging local sentiment we will only consider positive and negative sentiment, thus we must filter and transform the data.
+
+We start by removing all neutral tweet (sentiment of 0) from the data.
+
+```{r eval=FALSE}  
+
+  twsent.sp <- tweet.sp[tweet.sp@data$SentimentScore != 0, ]
+
+```
+
+Then we convert all tweet to simply negative (-1) or positive (1)
+
+```{r eval=FALSE}  
+
+  twsent.sp@data$SS <- ifelse(twsent.sp@data$SentimentScore < 0, -1, 1)
+
+```
+
+Finally, we extract just the data portion of the tweet sp object.
+
+```{r eval=FALSE}  
+
+  twsent <- twsent.sp@data
+
+```
+
+### Write Data Back to Database
+
+Finally, we write the non-spatial data back to the data base.
+
+First we convert the date fields in the sales and crime date back to simple character strings for storage purposes
+
+```{r eval=FALSE}  
+
+  # Convert sales.date to character to write to database
+  sales.data <- dplyr::mutate(.data=sales.data,
+                              sales.date = as.character(sales.date))  
+  
+  # Convert sales.date to character to write to database
+  crime.data <- dplyr::mutate(.data=crime.data,
+                              crime.date = as.character(crime.date))  
+
+```
+
+Then we write the sales data to the database as **prepSales** or prepared sales.
+
+```{r eval=FALSE}  
+
+  dbWriteTable(db.conn, 'prepSales', sales.data, row.names=FALSE, overwrite=TRUE)
+
+```
+
+Next, we write the crime data, overwriting the previous data.
+
+```{r eval=FALSE}  
+
+  # Check if exists, if so overwrite
+  if (dbExistsTable(db.conn, 'Crime')){
+    dbRemoveTable(db.conn, 'Crime')
+  }
+  
+  # Write to Database
+  dbWriteTable(db.conn, 'Crime', crime.data, row.names=FALSE)
+
+```
+
+And, finally, we write the tweet sentiment data, again overwriting the previous data
+
+```{r eval=FALSE}  
+
+  # Check if exists, if so overwrite
+  if (dbExistsTable(db.conn, 'SentimentTweets')){
+    dbRemoveTable(db.conn, 'SentimentTweets')
+  }
+
+  # Write to database
+  dbWriteTable(db.conn, 'SentimentTweets', twsent, row.names=FALSE)
+
+```
+
+We complete the preparation phase by closing the connection to the database.
+
+```{r eval=FALSE}  
+    
+  dbDisconnect(db.conn)
+  
+```
+
+## Chapters 8 and 9
+
+Chapters 8 and 9 cover the exploration and data cleaning steps.  As these stages are highly iterative, and often rely on similar techniques and methods, we will cover them jointly in the code.  
+
+#### Preliminary commands
+
+As usual, we begin with a set of preliminary commands.
+
+First we load the necessary libraries
+
+```{r eval=FALSE}  
+
+  library(sf)
+  library(sp)
+  library(tidyverse)
+  library(RSQLite)
+  library(RODBC)
+  library(GGally)
+
+```
+
+Then we set the paths to the code and the data
+
+```{r eval=FALSE}  
+
+  data.dir <- 'c:/temp/'                      # For Example
+  code.dir <- 'c:/code/research/REAIA_book/'  # For Example
+
+```
+
+We load the custom functions
+
+```{r eval=FALSE}  
+
+  source(paste0(code.dir, 'custom_functions.R'))  
+
+```
+
+And then we set the name of the database and establish a connection to it.
+
+```{r eval=FALSE}  
+
+  # Set database location
+  data.db <- file.path(data.dir, 'seattleCaseStudy.db')
+
+  # Establish connection
+  db.conn <- dbConnect(dbDriver('SQLite'), data.db)
+
+```
+
+#### Load Data
+
+We begin by loading the data.
+
+First we load the sales data from the database.
+
+```{r eval=FALSE}  
+
+  sales.data <- dbReadTable(db.conn, 'prepSales')
+
+```
+
+Then we load in the three spatial representations of the Seattle Police Beat data from the saved R workspace.
+
+```{r eval=FALSE}  
+
+  load(file=file.path(data.dir, 'geographic/beats.Rdata'))
+
+```
+
+We then convert the sales dates back into R format
+
+```{r eval=FALSE}  
+
+  sales.data <- dplyr::mutate(.data=sales.data,
+                               sales.date=as.Date(sales.date))
+
+```
+  
+Finally, we ensure that the categorial variables are represented as such.
+
+```{r eval=FALSE}  
+
+  
+  # Identify Categorical Varialbes
+  cat.vars <- c('present.use', 'zoning', 'topo', 'restr.szshp',
+                'view.rainier', 'view.olympics', 'view.cascades',
+                'view.terr', 'view.city', 'view.puget', 'view.lkwash',
+                'view.lksamm', 'view.smwater', 'view.other', 'wfnt', 'wfnt.bank',
+                'traffic.noise', 'bldg.grade', 'condition', 'beat')
+  
+  # Ensure they are represented as factors (categorical).
+  for(cv in cat.vars) sales.data[, cv] <- as.factor(sales.data[, cv])
+
+```
+
+#### Univariate Exploration 
+
+We start with exploring the univariate properties of the sales data.
+
+First, we get a list of the field types
+
+```{r eval=FALSE}  
+
+  field.types <- unlist(lapply(sales.data, class))
+
+```
+
+For all fields that are numeric or integers, we build a summary statistics table using the **fullSummary** custom function.  We then print this to the screen for review. 
+
+```{r eval=FALSE}  
+
+  # Compute summary table for numeric and integer variables
+  summ.table <- t(do.call(cbind, 
+                        lapply(sales.data[,field.types == 'numeric' |
+                                           field.types == 'integer'],
+                               fullSummary)))
+  
+  # Show the table
+  summ.table
+
+```
+
+Next, we compute a set of summary statistic for the factor (categorical) variables. 
+
+```{r eval=FALSE}  
+
+  summary(sales.data[, field.types == 'factor'])
+
+```
+
+Given the summary statistics, we now filter out a number of observations that appear to be errors of value or mislabeled transactions that were not eliminated earlier.
+
+First we look at the lowest sales prices and remove all of those under $50,000
+
+```{r eval=FALSE}  
+
+  # Examine lowest prices
+  head(sales.data$sale.price[order(sales.data$sale.price)], 300)
+  
+  # Filter out those below $50,000 
+  sales.data <- dplyr::filter(sales.data, sale.price >= 50000)
+
+```
+
+Next we look at home sizes and remove those under 300 square feet in size.
+
+```{r eval=FALSE}  
+
+  # Examine lowest home sizes
+  head(sales.data$tot.sf[order(sales.data$tot.sf)], 300)
+  
+  # Filter those below 300
+  sales.data <- dplyr::filter(sales.data, tot.sf >= 300)
+
+```
+
+And then we remove those homes with more than 10 bedrooms.
+  
+```{r eval=FALSE}  
+  
+  # Examine lowest number of bedrooms
+  tail(sales.data$beds[order(sales.data$beds)], 300)
+
+  # Filter those greater htan 10
+  sales.data <- dplyr::filter(sales.data, beds <= 10)
+  
+```
+
+  
+#### Univariate Visual/Informal Exploration
+
+We now make visual explanation of most of the numeric fields.  For continuous variables we use density plots and for the categorical or ordinal we use bar plots. 
+
+We start with the continuous variables. 
+
+```{r eval=FALSE}  
+
+  # Sale Price
+  sp.dens <- ggplot(sales.data,
+         aes(x=sale.price)) +
+    geom_density(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Sale Price') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Lot Size
+  ls.dens <- ggplot(sales.data,
+         aes(x=lot.size)) +
+    geom_density(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Lot Size') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Home Size
+  hs.dens <- ggplot(sales.data,
+                    aes(x=tot.sf)) +
+    geom_density(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Home Size') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Home Age
+  ag.dens <- ggplot(sales.data,
+         aes(x=age))+
+    geom_density(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Home Age') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Effective Age
+  ea.dens <- ggplot(sales.data,
+         aes(x=eff.age)) +
+    geom_density(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Effective Age') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Basement Size
+  bs.dens <- ggplot(sales.data,
+         aes(x=bsmt.sf)) +
+    geom_density(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Basement Size') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Garage Basement Size
+  gs.dens <- ggplot(sales.data,
+         aes(x=gar.bsmt.sf)) +
+    geom_density(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Garage Basement Size') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Attached Garage Size
+  as.dens <- ggplot(sales.data,
+         aes(x=gar.att.sf)) +
+    geom_density(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Attached Garage Size') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Deck Size
+  ds.dens <- ggplot(sales.data,
+         aes(x=deck.sf)) +
+    geom_density(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Deck Size') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Waterfrontage
+  wf.dens <- ggplot(sales.data,
+                    aes(x=wfnt.ftg)) +
+    geom_density(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Water Frontage Length') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Make Plots
+  ggMultiPlots(sp.dens, ls.dens, hs.dens, ag.dens, 
+               ea.dens, bs.dens, as.dens, gs.dens,
+               ds.dens, wf.dens, cols=4)
+  
+  # Stories  
+  st.hist <- ggplot(sales.data,
+         aes(x=stories)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Stories') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Bedrooms
+  bd.hist <- ggplot(sales.data,
+         aes(x=beds))+
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Bedrooms') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Bathrooms
+  bt.hist <- ggplot(sales.data,
+         aes(x=baths)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Bathrooms') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+
+```  
+
+We then plot the density plots for the continuous variables. 
+
+```{r eval=FALSE}  
+
+  ggMultiPlots(st.hist, bd.hist, bt.hist, cols=3)
+
+```  
+
+Next we build the bar plots for the categorical and ordinal variables.
+
+```{r eval=FALSE}  
+
+  # Present Use
+  pu.hist <- ggplot(sales.data,
+                    aes(x=present.use)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Present Use') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Zoning
+  zo.hist <- ggplot(sales.data,
+                    aes(x=zoning)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Zoning') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Restrictive Topography
+  tp.hist <- ggplot(sales.data,
+                    aes(x=topo)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Restrictive Topography') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Restrictive Lot Size
+  rs.hist <- ggplot(sales.data,
+                    aes(x=restr.szshp)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Restrictive Lot Size/Shape') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # View of Rainier
+  vr.hist <- ggplot(sales.data,
+                    aes(x=view.rainier)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('View of Mt. Rainier') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # View of Olympics
+  vo.hist <- ggplot(sales.data,
+                    aes(x=view.olympics)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('View of Olympic Mountains') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # View of Cascades
+  vc.hist <- ggplot(sales.data,
+                    aes(x=view.cascades)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('View of Cascade Mountains') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Territorial View
+  vt.hist <- ggplot(sales.data,
+                    aes(x=view.terr)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Territorial View') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # City View
+  vy.hist <- ggplot(sales.data,
+                    aes(x=view.city)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('City View') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Puget Sound View
+  vp.hist <- ggplot(sales.data,
+                    aes(x=view.puget)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Puget Sound View') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Lake Washington View
+  vw.hist <- ggplot(sales.data,
+                    aes(x=view.lkwash)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Lake Washington View') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Lake Sammamish View
+  vs.hist <- ggplot(sales.data,
+                    aes(x=view.lksamm)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Lake Sammamish View') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Small waterbody view
+  vb.hist <- ggplot(sales.data,
+                    aes(x=view.smwater)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('View of Small Waterbody') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Other View
+  v0.hist <- ggplot(sales.data,
+                    aes(x=view.other)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('View of Other Amenity') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Water Frontage Type
+  wt.hist <- ggplot(sales.data,
+                    aes(x=wfnt)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Water Frontage Type') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Water front bank type
+  wb.hist <- ggplot(sales.data,
+                    aes(x=wfnt.bank)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Water Frontage Bank Type') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Traffic Noise
+  tn.hist <- ggplot(sales.data,
+                    aes(x=traffic.noise)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Traffic Noise Severity') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Building Grade
+  bg.hist <- ggplot(sales.data,
+                    aes(x=bldg.grade)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Building Grade') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Building Condition
+  bc.hist <- ggplot(sales.data,
+                    aes(x=condition)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Building Condition') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+  # Police Beat Count
+  pb.hist <- ggplot(sales.data,
+                    aes(x=beat)) +
+    geom_bar(fill='blue', alpha=.5) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Police Beat') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.y=element_blank())
+  
+```
+
+And then plot them. 
+  
+```{r eval=FALSE}  
+  
+  # Make Plots 1
+  ggMultiPlots(pu.hist, zo.hist, tp.hist,
+               rs.hist, vr.hist, vo.hist,
+               vc.hist, vt.hist, vy.hist,
+               cols=3)
+  
+  # Make Plots 2
+  ggMultiPlots(vp.hist, vw.hist, vs.hist,
+               vb.hist, v0.hist, wt.hist,
+               wb.hist, tn.hist, bg.hist,
+               bc.hist, pb.hist, 
+               cols=3)
+
+```
+
+From the exploration above, we make a number transformations to the data.  
+
+First we eliminate the 'View of Lake Sammamish' variable as no observations have this.
+
+```{r eval=FALSE}  
+
+  sales.data$view.lksamm <- NULL
+
+```
+
+And then we convert the waterfront variable from an ordinal to a binary due to the small number of categories in the ordinal variable.
+
+```{r eval=FALSE}  
+
+  sales.data$is.waterfront <- ifelse(sales.data$wfnt != 0, 1, 0)
+
+```
+
+Finally, we convert the beds, baths and building quality variables to numeric (from categorical) due to their large number of levels.
+
+```{r eval=FALSE}  
+
+  sales.data$beds <- as.numeric(as.character(sales.data$beds))
+  sales.data$baths <- as.numeric(as.character(sales.data$baths))
+  sales.data$bldg.grade <- as.numeric(as.character(sales.data$bldg.grade))
+
+```
+
+#### Multivariate Exploration 
+
+Next, we turn to multivariate exploration.
+
+We start by building a scatter plot matrix involving some of the most important variables in the sales data.
+
+```{r eval=FALSE}  
+
+  ggcorr(sales.data[,c('sale.price', 'tot.sf', 'lot.size','beds', 'baths',
+                       'age', 'bldg.grade')], label=TRUE)
+
+```
+
+To get a better look at the bivariate relationship between the independent variables and sales price (dependent) we create individual scatterplots. 
+
+```{r eval=FALSE}  
+  
+  # Home Size and Sale Price
+  ggplot(sales.data,
+         aes(x=tot.sf, y=sale.price))+
+    geom_point() +
+    scale_y_log10() +
+    stat_smooth()
+
+  # Age and Sale Price
+  ggplot(sales.data,
+         aes(x=age, y=sale.price))+
+    geom_point() +
+    scale_y_log10() +
+    stat_smooth()
+  
+  # Eff Age and Sale Price
+  ggplot(sales.data,
+         aes(x=eff.age, y=sale.price))+
+    geom_point() +
+    scale_y_log10() +
+    stat_smooth()
+  
+  # Lot Size and Sale Price
+  ggplot(sales.data,
+         aes(x=lot.size, y=sale.price))+
+    geom_point() +
+    scale_y_log10() +
+    scale_x_log10() +
+    stat_smooth()
+
+```
+
+And for the categorical and ordinal variables, we create boxplots
+
+```{r eval=FALSE}  
+    
+  # Present Use and Sale Price
+  ggplot(sales.data,
+         aes(x=present.use, y=sale.price))+
+    geom_boxplot() +  
+    scale_y_log10()
+
+  # Waterfront and Sale Price
+  ggplot(sales.data,
+         aes(x=(wfnt!=0), y=sale.price))+
+    geom_boxplot() +  
+    scale_y_log10()
+  
+  # Zoning and Sale Price
+  ggplot(sales.data,
+         aes(x=zoning, y=sale.price))+
+    geom_boxplot() +  
+    scale_y_log10()
+  
+  # Topography and Sale Price
+  ggplot(sales.data,
+         aes(x=topo, y=sale.price))+
+    geom_boxplot() +  
+    scale_y_log10()
+  
+  # Building Grade and Sale Price
+  ggplot(sales.data,
+         aes(x=as.factor(bldg.grade), y=sale.price))+
+    geom_boxplot() +  
+    scale_y_log10()
+
+  # Condition and Sale Price
+  ggplot(sales.data,
+         aes(x=as.factor(condition), y=sale.price))+
+    geom_boxplot() +  
+    scale_y_log10()
+  
+  # Baths and Sale Price
+  ggplot(sales.data,
+         aes(x=as.factor(baths), y=sale.price))+
+    geom_boxplot() +  
+    scale_y_log10()
+
+  # Beds and Sale Price
+  ggplot(sales.data,
+         aes(x=as.factor(beds), y=sale.price))+
+    geom_boxplot() +  
+    scale_y_log10()
+
+```
+
+#### Transform View Variables
+
+From the above exploration we find that the view variables need some recategorization and transformation. Particularly, we will transform the multiple view variables (9) into a single categorical variable indicating the best view that each sale has, if any.
+
+We start by creating a matrix of whether or not each observation has a particular view.
+
+```{r eval=FALSE}  
+
+  has.view <- as.data.frame(lapply(sales.data[,14:22], 
+                             function(x) ifelse(as.numeric(x) == 1, 0, 1)))
+
+```
+
+Next, for each observation we record which view offers the maximum value (best rated view).  This requires us to build a custom function to scan each observation and then return the column number of the best view rating.
+
+```{r eval=FALSE}  
+
+  # Small custom function to extract
+  getX <- function(x){
+    if(max(x) == 0){
+      return(0)
+    } else {
+      return(which(x == max(x))[1])
+    }
+  }
+  
+  # Get maximum  view
+  max.view <- apply(has.view, 1, getX)
+  
+```
+
+We then create a vector containing the name of the best view.  First we set all values to no view, then we add the name of the view, if any, that has the maximum rating. Finally, we add this vector to the data under the **view.best** field.
+
+```{r eval=FALSE}  
+
+  # Set Null View Type
+  view.type <- rep('no view', length(max.view))
+  
+  # Assign Maximum
+  view.type[max.view != 0] <- names(has.view)[max.view[max.view != 0]]
+  
+  # Add to sales.data
+  sales.data$view.best <- view.type
+
+```  
+  
+We then plot prices against the various view types as a set of boxplots.
+
+```{r eval=FALSE}  
+
+  ggplot(sales.data,
+         aes(x=view.best, y=sale.price))+
+    geom_boxplot() +  
+    scale_y_log10()
+
+```
+
+We now make two more transformations to the view scores.  First we consolidate them into binary views based on whether there is a mountain, water or other view.
+
+```{r eval=FALSE}  
+
+  # Create mountain view
+  sales.data$view.mtn <- ifelse(sales.data$view.rainier != 0 |
+                                  sales.data$view.olympics != 0 |
+                                  sales.data$view.cascades != 0,
+                                1, 0)
+
+  # Create water view
+  sales.data$view.water <- ifelse(sales.data$view.puget != 0 |
+                                    sales.data$view.lkwash != 0 |
+                                    sales.data$view.smwater != 0,
+                                  1, 0)
+  
+  # Create other view
+  sales.data$view.other <- ifelse(sales.data$view.city != 0 |
+                                    sales.data$view.terr != 0 |
+                                    sales.data$view.other != 0,
+                                  1, 0)
+
+```  
+  
+We also total up all view scores across the nine categories to give a sum of views for each observations.
+
+```{r eval=FALSE}  
+  
+  # Create a matrix of view scores (as numeric)
+  view.scores <- as.data.frame(lapply(sales.data[, 14:22], 
+                                      function(x) as.numeric(as.character(x))))
+
+  # Sum and add to the data
+  sales.data$view.score <- rowSums(view.scores)
+
+```
+
+#### Mapping 
+
+Next we map the independent variables.
+
+First we build a base map showing the location of the observations. 
+
+```{r eval=FALSE}  
+
+  base.map <- ggplot(sales.data,
+                     aes(x=longitude, 
+                         y=latitude)) +
+    geom_point(color='gray40', size=.1)
+    
+  base.map <- base.map + geom_path(data=beats.spf,
+                                   aes(x=long, y=lat, group=id),
+                                   color='gray20')
+  base.map
+  
+```  
+
+Then we plot the observations, colored by sale price.
+  
+```{r eval=FALSE}  
+  
+  price.map <- ggplot(sales.data,
+                   aes(x=longitude,
+                       y=latitude, 
+                       color=log(sale.price))) +
+    scale_color_gradient2(low='red', high='blue', midpoint=12.5)+
+    geom_point()+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  price.map
+
+```
+
+We then create point maps of the other variables.
+
+```{r eval=FALSE}  
+
+  # Property use (Detached or townhome)
+  use.map <- ggplot(sales.data,
+                     aes(x=longitude, 
+                         y=latitude,
+                         color=present.use)) +
+    geom_point(size=.4) +
+    scale_color_manual(values=c('black', 'red')) + 
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  use.map
+  
+  # Zoning type
+  zoning.map <- ggplot(sales.data,
+                     aes(x=longitude, 
+                         y=latitude,
+                         color=zoning)) +
+    geom_point() +
+    scale_color_manual(values=c('red', 'royalblue', 'blue', 'navy',
+                                'darkorange', 'gray80', 'gray50', 'gray20')) +
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  zoning.map
+  
+  # Challenging Topography
+  topo.map <- base.map + 
+    geom_point(data=sales.data[sales.data$topo==1, ],
+               aes(x=longitude,
+                   y=latitude),
+               color='red')+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  topo.map
+  
+  # Waterfont
+  wfnt.map <- base.map + 
+    geom_point(data=sales.data[sales.data$wfnt!=0, ],
+               aes(x=longitude,
+                   y=latitude),
+               color='blue') +
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  wfnt.map
+  
+  # Traffic Noise
+  noise.map <- base.map + 
+    geom_point(data=sales.data[sales.data$traffic.noise!=0, ],
+               aes(x=longitude,
+                   y=latitude, 
+                   color=traffic.noise)) +
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  noise.map
+  
+  # Mountain View
+  mtview.map <- base.map + 
+    geom_point(data=sales.data[sales.data$view.rainier != 0, ],
+               aes(x=longitude,
+                   y=latitude),
+               color='blue') + 
+    geom_point(data=sales.data[sales.data$view.olympics != 0, ],
+               aes(x=longitude,
+                   y=latitude),
+               color='red')+ 
+    geom_point(data=sales.data[sales.data$view.cascades != 0, ],
+               aes(x=longitude,
+                   y=latitude),
+               color='darkgreen')+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  mtview.map
+  
+  # Waterview
+  waterview.map <- base.map + 
+    geom_point(data=sales.data[sales.data$view.puget != 0, ],
+               aes(x=longitude,
+                   y=latitude),
+               color='blue') + 
+    geom_point(data=sales.data[sales.data$view.lkwash != 0, ],
+               aes(x=longitude,
+                   y=latitude),
+               color='red')+ 
+    geom_point(data=sales.data[sales.data$view.smwater != 0, ],
+               aes(x=longitude,
+                   y=latitude),
+               color='darkgreen') +
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  waterview.map
+  
+  # Other View
+  otherview.map <- base.map + 
+    geom_point(data=sales.data[sales.data$view.terr != 0, ],
+               aes(x=longitude,
+                   y=latitude),
+               color='blue') + 
+    geom_point(data=sales.data[sales.data$view.city != 0, ],
+               aes(x=longitude,
+                   y=latitude),
+               color='red')+ 
+    geom_point(data=sales.data[sales.data$view.other != 0, ],
+               aes(x=longitude,
+                   y=latitude),
+               color='darkgreen')+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  otherview.map
+  
+  # View Score
+  viewscore.map <- ggplot(sales.data,
+                      aes(x=longitude,
+                          y=latitude, 
+                          color=view.score)) +
+    scale_color_gradient(low='gray50', high='darkred')+
+    geom_point()+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  
+  # Home Size
+  sf.map <- ggplot(sales.data,
+                    aes(x=longitude,
+                        y=latitude, 
+                        color=log(tot.sf))) +
+    scale_color_gradient2(low='red', high='blue', midpoint=7.5)+
+    geom_point()+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  sf.map
+
+  # Lot Size
+  ls.map <- ggplot(sales.data,
+                   aes(x=longitude,
+                       y=latitude, 
+                       color=log(lot.size))) +
+    scale_color_gradient2(low='red', high='blue', midpoint=9.5)+
+    geom_point()+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  ls.map
+  
+  # Nbr of Bedrooms
+  bed.map <- ggplot(sales.data,
+                   aes(x=longitude,
+                       y=latitude, 
+                       color=as.factor(beds))) +
+    geom_point()+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  bed.map
+
+  # Nbr of bathrooms
+  baths.map <- ggplot(sales.data,
+                   aes(x=longitude,
+                       y=latitude, 
+                       color=baths)) +
+    scale_color_gradient2(low='red', high='blue', midpoint=2.5)+
+    geom_point()+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  baths.map
+
+  # Nbr of Stories
+  stories.map <- ggplot(sales.data,
+         aes(x=longitude,
+             y=latitude, 
+             color=as.factor(stories))) +
+    geom_point()
+  stories.map
+  
+  # Age of Structure
+  age.map <- ggplot(sales.data,
+         aes(x=longitude,
+             y=latitude, 
+             color=age)) +
+    scale_color_gradient2(low='red', high='blue', midpoint=45)+
+    geom_point()
+  age.map
+  
+  # Home grade (quality)
+  grade.map <- ggplot(sales.data,
+         aes(x=longitude,
+             y=latitude, 
+             color=bldg.grade)) +
+    geom_point()
+  grade.map
+  
+  # Home condition
+  cond.map <- ggplot(sales.data,
+                      aes(x=longitude,
+                          y=latitude, 
+                          color=condition)) +
+    geom_point()
+  cond.map
+  
+  # Basement size
+  bsmt.map <- base.map + 
+    geom_point(data=sales.data[sales.data$bsmt.sf != 0, ],
+                  aes(x=longitude,
+                       y=latitude, 
+                       color=log(bsmt.sf+1))) +
+    scale_color_gradient2(low='red', high='blue', midpoint=5.5)+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  bsmt.map  
+  
+  # Attached garage size
+  gara.map <- base.map + 
+    geom_point(data=sales.data[sales.data$gar.att.sf != 0, ],
+               aes(x=longitude,
+                   y=latitude, 
+                   color=log(gar.att.sf+1))) +
+    scale_color_gradient2(low='red', high='blue', midpoint=5.5)+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  gara.map  
+  
+  # Basement garage size
+  garb.map <- base.map + 
+    geom_point(data=sales.data[sales.data$gar.bsmt.sf != 0, ],
+               aes(x=longitude,
+                   y=latitude, 
+                   color=log(gar.bsmt.sf+1))) +
+    scale_color_gradient2(low='red', high='blue', midpoint=5.5)+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  garb.map  
+  
+```  
+  
+#### Label Discordant Values
+
+Finally, based on the exploration above, we deal with the discordant values.  We take a 'label and test' approach, by labeling the discordant values in this step and then testing for their impact in the modeling step that follows.  
+
+We start by adding three new fields to the sales data:
+1. Discordant: Binary indicating discordant or not
+2. Disc.fields: Text field with all fields that are discordant
+3. Disc.type: Text field with the type of discordancy for each discordant field
+
+Each of these is set to 0 or blank to begin.
+
+```{r eval=FALSE}  
+
+  sales.data$discordant <- 0
+  sales.data$disc.fields <- ""
+  sales.data$disc.type <- ""
+
+```
+
+First, we label all properties with a restrictive lot size or shape as discordant.  We do this because there are only a few of them and they are likely very unique properties not indicative of the broader market. 
+
+```{r eval=FALSE}  
+
+  rss <- which(sales.data$restr.szshp != 0)
+  sales.data$discordant[rss] <- 1
+  sales.data$disc.fields[rss] <- paste0(sales.data$disc.fields[rss], 'restr.szshp | ')
+  sales.data$disc.type[rss] <- paste0(sales.data$disc.type[rss], 'small category | ')
+
+```
+
+Next, we apply a discordant label to a number of key fields based on their values.  Particularly, we label all values below the 1% quantile or above the 99% quantile as potentially discordant.  These are Univariate (UV) discordants.
+
+```{r eval=FALSE}  
+    
+  # Sale Price
+  spd <- which(sales.data$sale.price > quantile(sales.data$sale.price, .99) |
+                 sales.data$sale.price < quantile(sales.data$sale.price, .01))
+  
+  sales.data$discordant[spd] <- 1
+  sales.data$disc.fields[spd] <- paste0(sales.data$disc.fields[spd], 'sale.price | ')
+  sales.data$disc.type[spd] <- paste0(sales.data$disc.type[spd], 'UV: 1% Quant | ')
+  
+  # Home Size
+  tsd <- which(sales.data$tot.sf > quantile(sales.data$tot.sf, .99) |
+                 sales.data$tot.sf < quantile(sales.data$tot.sf, .01))
+  
+  sales.data$discordant[tsd] <- 1
+  sales.data$disc.fields[tsd] <- paste0(sales.data$disc.fields[tsd], 'tot.sf | ')
+  sales.data$disc.type[tsd] <- paste0(sales.data$disc.type[tsd], 'UV: 1% Quant | ')
+ 
+  # Lot Size
+  lsd <- which(sales.data$lot.size > quantile(sales.data$lot.size, .99) |
+                 sales.data$lot.size < quantile(sales.data$lot.size, .01))
+  
+  sales.data$discordant[lsd] <- 1
+  sales.data$disc.fields[lsd] <- paste0(sales.data$disc.fields[lsd], 'lot.size | ')
+  sales.data$disc.type[lsd] <- paste0(sales.data$disc.type[lsd], 'UV: 1% Quant | ')
+  
+  # Building Quality
+  bsd <- which(sales.data$bldg.grade > quantile(sales.data$bldg.grade, .99) |
+                 sales.data$bldg.grade < quantile(sales.data$bldg.grade, .01))
+  
+  sales.data$discordant[bsd] <- 1
+  sales.data$disc.fields[bsd] <- paste0(sales.data$disc.fields[bsd], 'bldg.grade | ')
+  sales.data$disc.type[bsd] <- paste0(sales.data$disc.type[bsd], 'UV: 1% Quant | ')
+  
+  # Bed Count
+  dsd <- which(sales.data$beds > quantile(sales.data$beds, .99) |
+                 sales.data$beds < quantile(sales.data$beds, .01))
+  
+  sales.data$discordant[dsd] <- 1
+  sales.data$disc.fields[dsd] <- paste0(sales.data$disc.fields[dsd], 'beds | ')
+  sales.data$disc.type[dsd] <- paste0(sales.data$disc.type[dsd], 'UV: 1% Quant | ')
+
+  # Baths
+  tsd <- which(sales.data$baths > quantile(sales.data$baths, .99) |
+                 sales.data$baths < quantile(sales.data$baths, .01))
+  
+  sales.data$discordant[tsd] <- 1
+  sales.data$disc.fields[tsd] <- paste0(sales.data$disc.fields[tsd], 'baths | ')
+  sales.data$disc.type[tsd] <- paste0(sales.data$disc.type[tsd], 'UV: 1% Quant | ')
+  
+```
+
+Finally, we find the home size and price relationship to be one of the strongest relationships in the data.  From this relationship we label multivariate (MV) discordant values using a multiple step process. 
+
+We begin by extracting a data frame of just the sales price and home size
+
+```{r eval=FALSE}  
+
+  x.data <- sales.data[,c('sale.price', 'tot.sf')]
+
+```
+
+We then estimate the Mahalanobis Distance for each point from their multivariate mean.
+
+```{r eval=FALSE}  
+
+  x.data$x.mah <- mahalanobis(x.data, colMeans(x.data), cov(x.data))
+  
+```
+
+We convert the Mahalanobis Distances into quantile at 80%, 90%, 95%, 99% and 99.9% and add this quantile measure as a factor to the data
+
+```{r eval=FALSE}  
+
+  # Create cutoff points
+  cuts <- quantile(x.data$x.mah, probs=c(0, .8, .9, .95, .99, .999, 1))
+  
+  # Add as a factor to the data
+  x.data$mah.col <- as.numeric(as.factor(cut(x.data$x.mah, cuts)))
+
+```  
+
+We then add the original discordancy measure to the new data. 
+
+```{r eval=FALSE}  
+   
+  x.data$discordant <- sales.data$discordant
+  
+```
+ 
+Next, we make two plots.  The first plotting sale price against total square footage, with the univariate discordant values labeled.  The second shows the quantile value of each observation based on its mahalabonis distance from the above calculation
+
+```{r eval=FALSE}  
+
+  # Existing discordancy
+  ex.disc <- ggplot(x.data, 
+                    aes(x=tot.sf, y=sale.price, 
+                    color=as.factor(discordant))) +
+    geom_point() + 
+    scale_x_log10() +
+    scale_y_log10()
+  
+  # Multivariate discordancy
+  mv.disc <- ggplot(x.data, 
+                    aes(x=tot.sf, y=sale.price, color=as.factor(mah.col),
+                    size=sqrt(mah.col) / 2)) +
+    geom_point() +
+    scale_x_log10() + scale_y_log10() +
+    scale_color_manual(values=c('gray70', 'gray55', 'gray40', 'gray15', 'orange', 'red'))
+  
+  # Plot to viewer
+  ggMultiPlots(ex.disc, mv.disc, cols=2)
+
+```
+
+Based on the multivariate analysis, we then label anything at the 99% or greater as multivariate discordant.
+
+```{r eval=FALSE}  
+
+  x.disc <- which(x.data$mah.col >= 5)
+  sales.data$discordant[x.disc] <- 1
+  sales.data$disc.fields[x.disc] <- paste0(sales.data$disc.fields[x.disc], 'price v tot.sf | ')
+  sales.data$disc.type[x.disc] <- paste0(sales.data$disc.type[x.disc], 'MV: 1% Mah Quant | ')
+  
+```
+
+#### Write to database
+
+To finish the exploration and data cleaning, we write the data (as **cleanSales**) back to the database, first converting the sale price back to a character value.
+
+```{r eval=FALSE}  
+
+  # Convert dates to character
+  sales.data$sales.date <- as.character(sales.data$sales.date)
+  
+  # Write to the database
+  dbWriteTable(db.conn, 'cleanSales', sales.data, row.names=FALSE, overwrite=TRUE)
+
+```
+
+And then we close the connection to the database.
+
+```{r eval=FALSE}  
+
+  dbDisconnect(db.conn)
+
+```
 
 
 
