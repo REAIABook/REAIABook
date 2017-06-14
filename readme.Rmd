@@ -606,6 +606,7 @@ We finish the manage stage of our analysis by closing the connection to the data
 
 ```
 
+
 ## Chapter 7
 
 In chapter 7 we discuss data preparation.  In it we transform, integrate and filter our data.  
@@ -2809,6 +2810,1028 @@ And then we close the connection to the database.
 
 ```
 
+## Chapter 10
+
+In chapter we cover the price modeling process.
+
+As always, we begin with a set of preliminary commands.  First, we load the necessary libraries.
+
+```{r eval=FALSE}  
+
+  library(sf)
+  library(sp)
+  library(tidyverse)
+  library(RSQLite)
+  library(RODBC)
+  library(OpenStreetMap)
+  library(BMA)
+  library(MASS)
+  library(rgeos)
+  library(geosphere)
+  library(spgwr)
+  library(spdep)
+  library(car)
+  library(lmtest)
+  library(plm)
+
+```
+
+Then we set the paths to the data and code.
+
+```{r eval=FALSE}  
+
+  data.dir <- 'c:/temp/'
+  code.dir <- 'c:/code/research/REAIA_book/'
+  
+```
+
+We then load the custom functions.
+
+```{r eval=FALSE}  
+
+  source(paste0(code.dir, 'custom_functions.R'))  
+
+```
+
+And finally we set the location to the database and establish a connection to it. 
+
+```{r eval=FALSE}  
+
+  # Set path to database
+  data.db <- file.path(data.dir, 'seattleCaseStudy.db')
+  
+  # Establish connection
+  db.conn <- dbConnect(dbDriver('SQLite'), data.db)
+
+```
+
+#### Load data
+
+We begin by loading the sales data from the database.
+
+```{r eval=FALSE}  
+
+    sales.data <- dbReadTable(db.conn, 'cleanSales')
+
+```
+
+Next, we transform the sales date to the R date format. 
+
+```{r eval=FALSE}  
+  
+  sales.data$sales.date <- as.Date(sales.data$sales.date)
+
+```
+
+#### Basic Price Modeling 
+
+We begin the price modeling be specificy a basic linear model; one that includes most of the variables (generally non-spatial) that could possibly influence sales price.
+
+```{r eval=FALSE}  
+
+  base.lm <- lm(log(sale.price) ~ as.factor(present.use) + lot.size + 
+                  tot.sf + bsmt.sf + gar.bsmt.sf + gar.att.sf + deck.sf + 
+                  bldg.grade + condition + eff.age + baths + beds + 
+                  traffic.noise + view.best + is.waterfront + topo + restr.szshp +
+                  sales.date,
+                data=sales.data)
+
+```
+
+To further assist in the specification building process we employ two additional techniques: 1) stepwise regression; and 2) Bayesian Model Averaging (BMA).  
+
+We specify a step-wise regression model.
+
+```{r eval=FALSE}  
+
+  step.lm <- stepAIC(base.lm, direction="both")
+
+```
+
+Next, we specify a selection model through Bayesian Model Averaging (BMA).
+
+```{r eval=FALSE}  
+
+  bma.lm <- bicreg(y=log(sales.data$sale.price),
+                   x=sales.data[ ,c('present.use', 'lot.size', 'tot.sf', 
+                                    'bsmt.sf', 'gar.bsmt.sf', 'gar.att.sf', 'deck.sf',
+                                    'bldg.grade', 'condition', 'eff.age', 'baths', 'beds',
+                                    'traffic.noise', 'view.best', 'is.waterfront',
+                                    'topo', 'restr.szshp', 'sales.date')])
+
+  summary(bma.lm)
+  
+```
+
+Based on the results from the stepwise and the BMA process, we make a number of transformations to the data.
+
+First we combine home condition levels 1 and 2 into level 2
+
+```{r eval=FALSE}  
+
+  sales.data$condition[sales.data$condition == 1] <- 2
+
+```
+
+Next, we combine the traffic noise levels 2 and 3 into level 2
+
+```{r eval=FALSE}  
+
+  sales.data$traffic.noise[sales.data$traffic.noise == 3] <- 2
+
+```
+
+And then we combine the six smallest view.best categories into a single other view level. 
+
+```{r eval=FALSE}  
+
+  view.combine <- which(sales.data$view.best %in% c('view.other', 'view.smwater',
+                                                    'view.lkwash', 'view.puget', 
+                                                    'view.rainier', 'view.terr'))
+  sales.data$view.best[view.combine] <- 'view.other'
+
+```
+
+After the transformations we retest the BMA process with the new variables. 
+
+```{r eval=FALSE}  
+
+  bma.lm <- bicreg(y=log(sales.data$sale.price),
+                   x=sales.data[ ,c('present.use', 'lot.size', 'tot.sf', 
+                                    'bsmt.sf', 'gar.bsmt.sf', 'gar.att.sf', 'deck.sf',
+                                    'bldg.grade', 'condition', 'eff.age', 'baths', 'beds',
+                                    'traffic.noise', 'view.best', 'is.waterfront',
+                                    'topo', 'restr.szshp', 'sales.date')])
+
+  summary(bma.lm)
+
+```
+
+Given the information from the stepwise and BMA models together with the variable transformations, we respecify the base linear model. 
+
+```{r eval=FALSE}  
+
+  base.lm <- lm(log(sale.price) ~ as.factor(present.use) + lot.size + 
+                  tot.sf + bsmt.sf + gar.att.sf + deck.sf + 
+                  bldg.grade + condition + eff.age + baths + beds + 
+                  traffic.noise + view.best + is.waterfront +
+                  sales.date,
+                data=sales.data)
+
+```
+
+#### Diagnostics 
+
+We now run some diagnostics on the base model. 
+
+We start by testing for multicollinearity.  we check the variance inflation factors (VIF) and find that none of them exceed 10, the standard warning level. 
+
+```{r eval=FALSE}  
+
+  vif(base.lm)
+  sqrt(vif(base.lm)) > 2
+
+```
+
+Next, we test for heteroskedasticity with two Breusch-Pagan tests, one studentized, one not. We find heteroskedasticity in studentized test, but not in the other. 
+
+```{r eval=FALSE}  
+
+  # Studentized
+  bptest(base.lm)
+  
+  # Not studentized
+  ncvTest(base.lm)
+
+```
+
+Given the presence of heteroskedasticity, we then apply White's correction to the standard errors to see if any of the previously significant variables drop out.  
+
+```{r eval=FALSE}  
+
+  coeftest(base.lm, vcov=vcovHC(base.lm, "HC1"))
+
+```
+
+Next, we test for spatial autocorrelation in the residuals of our model.
+
+We begin by converting the sales data to a spatial points data frame.
+
+```{r eval=FALSE}  
+
+  sales.sp <- SpatialPointsDataFrame(cbind(sales.data$longitude,
+                                           sales.data$latitude),
+                                     sales.data)
+
+```
+
+We then build a spatial weights matrix of the observations, using an inverse distance-weighted, 10-nearest neighbors matrix. 
+
+```{r eval=FALSE}  
+
+  # Create neighbor list (use 10 nearest) 
+  nbList <- knn2nb(knearneigh(sales.sp, 10))
+
+  # Create Distances
+  nbDists <- nbdists(nbList, sales.sp)    
+
+  # Create a distance weighting function (.0025 is the nugget)
+  dwf <- function(x) {1 / ((x + .00025) ^ 2)}
+  
+  # Build the SWM
+  swm <- listw2U(nb2listw(nbList, 
+                          glist = lapply(nbDists, dwf),
+                          style="W",
+                          zero.policy=T))
+
+```
+
+Using the spatial weights matrix, we then apply a Moran's I test.  We find signification spatial autocorrelation. 
+    
+```{r eval=FALSE}  
+    
+  mi.test <- moran.test(base.lm$resid, swm, zero.policy=TRUE)
+
+```
+
+Next, we use a Lagrange Multiplier test to determine if the spatial dependence is in the dependent variable (spatial lag) or in the model errors (spatial error). 
+ 
+```{r eval=FALSE}  
+ 
+  lm.test <- lm.LMtests(base.lm, 
+                        swm,
+                        test=c("LMerr", "LMlag", "RLMerr", "RLMlag"))
+
+```
+ 
+#### Spatial Models 
+
+Finding spatial autocorrelation in the error terms of our model, we now specify a spatial error model. We use the same spatial weights matrix specified above. 
+
+```{r eval=FALSE}  
+
+   mod.se <- errorsarlm(as.formula(base.lm),
+                        data=sales.sp,
+                        swm, 
+                        method="spam", 
+                        zero.policy=TRUE)
+
+```
+
+We then test for spatial autocorrelation in the error terms of the spatial model. 
+
+```{r eval=FALSE}  
+
+   mi.test.se <- moran.test(mod.se$resid, swm, zero.policy=TRUE)
+
+```
+
+Spatial heterogeneity may also be found in a model covering a large geographic area the size of Seattle.  We test for spatial heterogeneity in our model (and data) through the use of a geographically weighted regression (GWR). 
+
+We do so by first specificying the geographically weighted model (bandwidth=.1)
+
+```{r eval=FALSE}  
+   
+   mod.gwr <-gwr(base.lm, sales.sp, bandwidth=.1)
+
+```    
+  
+We then examine the results of the GWR and find some spatial heterogeniety.
+
+```{r eval=FALSE}  
+
+    summary(mod.gwr$SDF@data)
+
+```
+
+#### Sensitivity Tests
+
+We now test the sensitivity of our model to various changes in specification, discordant values and data sample. After specifying each model we compare the coefficient estimates to those of the base model to check for robustness of the model. 
+
+We begin with sensitivity to specification.  First we re-estimate the final spatial error model, but remove any variables explicitly tied to the location of the observation (view, traffic noise, waterfront, etc.)
+
+```{r eval=FALSE}  
+
+   mod.se.sens.s1 <- errorsarlm(log(sale.price) ~ as.factor(present.use) + lot.size + 
+                                     tot.sf + bsmt.sf + gar.att.sf + deck.sf + 
+                                     bldg.grade + condition + eff.age + baths + beds + 
+                                     sales.date,
+                                data=sales.sp,
+                                swm, 
+                                method="spam", 
+                                zero.policy=TRUE)
+```
+
+Next, we remove accessory home characteristics such as basement size, garage size, etc. from the model.
+
+```{r eval=FALSE}  
+
+   mod.se.sens.s2 <- errorsarlm(log(sale.price) ~ as.factor(present.use) + lot.size + 
+                                  tot.sf + 
+                                  bldg.grade + condition + eff.age + baths + beds + 
+                                  sales.date,
+                                data=sales.sp,
+                                swm, 
+                                method="spam", 
+                                zero.policy=TRUE)
+
+```
+
+Then we remove bedrooms count, bathroom count and home condition, leaving a rather sparse model. 
+
+```{r eval=FALSE}  
+
+   mod.se.sens.s3 <- errorsarlm(log(sale.price) ~ as.factor(present.use) + lot.size + 
+                                  tot.sf + bldg.grade + eff.age + 
+                                  sales.date,
+                                data=sales.sp,
+                                swm, 
+                                method="spam", 
+                                zero.policy=TRUE)
+   
+```
+
+Finally, we re-specify the above as a simple ordinary least squares model. 
+
+```{r eval=FALSE}  
+
+   mod.se.sens.s4 <- lm(log(sale.price) ~ as.factor(present.use) + lot.size + 
+                          tot.sf + bldg.grade + eff.age + 
+                          sales.date,
+                        data=sales.data)
+```
+
+Next, we test for sensitivity to discordant values.  
+
+First, we test for sensitivity to all discordant values.  Because we are changing the sample of observations we must specificy the spatial weights matrix before re-estimating the model. 
+
+```{r eval=FALSE}  
+  
+   # Extract only data with no discordant labels
+   d1.data <- sales.sp[sales.sp@data$discordant == 0, ]
+   
+   # Build new SWM
+   nbList <- knn2nb(knearneigh(d1.data, 10))
+   
+   # Create Distances
+   nbDists <- nbdists(nbList, d1.data)    
+   
+   # Building Weights Matrix
+   swm <- listw2U(nb2listw(nbList, 
+                           glist = lapply(nbDists, dwf),
+                           style="W",
+                           zero.policy=T))
+   
+   # Estimate Model
+   mod.sens.d1 <- errorsarlm(as.formula(base.lm),
+                             data=d1.data,
+                             swm, method="spam", 
+                             zero.policy=TRUE)
+
+```   
+   
+Next, we just remove the Univariate discordant observations and re-estimate.    
+   
+```{r eval=FALSE}  
 
 
+   # Extract only those with no univariate discordancy
+   d2.id <- grep('UV:', sales.sp@data$disc.type)
+   d2.data <- sales.sp[-d2.id, ]
+   
+   # Create neighbors list
+   nbList <- knn2nb(knearneigh(d2.data, 10))
+   
+   # Create Distances
+   nbDists <- nbdists(nbList, d2.data)    
+   
+   # Building Weights Matrix
+   swm <- listw2U(nb2listw(nbList, 
+                           glist = lapply(nbDists, dwf), 
+                           style="W",
+                           zero.policy=T))
+  
+   # Re-estimate model 
+   mod.sens.d2 <- errorsarlm(as.formula(base.lm),
+                             data=d2.data,
+                             swm, 
+                             method="spam", 
+                             zero.policy=TRUE)
+
+```
+   
+Finally, we just remove those observations with discordancy in the dependent variable.    
+   
+```{r eval=FALSE}  
+
+   # Extract only those with no sale price discordancy    
+   d3.id <- grep('sale.price', sales.data$disc.fields)
+   d3.data <- sales.sp[-d3.id, ]
+   
+   # Create neighbors list
+   nbList <- knn2nb(knearneigh(d3.data, 10))
+   
+   # Create Distances
+   nbDists <- nbdists(nbList, d3.data)    
+   
+   # Building Weights Matrix
+   swm <- listw2U(nb2listw(nbList, 
+                           glist = lapply(nbDists, dwf), 
+                           style="W",
+                           zero.policy=T))
+   
+   # Re-estimate model
+   mod.sens.d3 <- errorsarlm(as.formula(base.lm),
+                             data=d3.data,
+                             swm, 
+                             method="spam", 
+                             zero.policy=TRUE)
+
+```   
+
+Our last set of sensitivity test examine the sensitivity of the model do the sample of data itself.  We run 10 cross validation tests where each one uses only 75% of the original sample.  We then compare the coefficient estimates from the 10 iterations to check the robustness of the model.  
+
+We begin by setting up a capture list and then starting a loop through 10 iterations.
+
+```{r eval=FALSE}  
+      
+   # Create capture list
+   cv.list <- list()
+   
+   # Loop through and re-estimate model
+   for(i in 1:10){
+
+```
+
+Within each iteration, we begin by setting a random seed and then selecting a random 75% sample from the data.
+
+```{r eval=FALSE}  
+
+     # Set seed for consistent sampling
+     set.seed(i)
+     
+     # Sample 75% of observations
+     cv.id <- sample(1:nrow(sales.sp), round(nrow(sales.sp) * .75), 0)
+     cv.data <- sales.sp[-cv.id, ]
+     
+```
+
+Next, we re-specify the spatial weights matrix. 
+
+```{r eval=FALSE}  
+     
+     # Calculate neighbors
+     nbList <- knn2nb(knearneigh(cv.data, 10))
+     
+     # Create Distances
+     nbDists <- nbdists(nbList, cv.data)    
+     
+     # Building Weights Matrix
+     swm <- listw2U(nb2listw(nbList, 
+                             glist = lapply(nbDists, dwf),
+                             style="W",
+                             zero.policy=T))
+```
+
+And then re-estimate the model. 
+
+```{r eval=FALSE}  
+
+     cv.list[[i]] <- errorsarlm(as.formula(base.lm),
+                               data=cv.data,
+                               swm, method="spam", zero.policy=TRUE)
+    
+  }
+
+```
+
+#### Save workspace
+
+Instead of writing to the database, we save the entire workspace for use later.
+
+```{r eval=FALSE}  
+
+  save.image(file.path(data.dir, 'model_workspace.RData'))
+
+```
+
+## Chapter 12
+
+In this chapter we present a case study of combining traditional real estate pricing models with data non-traditional data from government and social media sources. 
+
+As always, we begin with a set of preliminary commands.  First, we load the necessary libraries.
+
+```{r eval=FALSE}  
+
+  library(sf)
+  library(sp)
+  library(tidyverse)
+  library(RSQLite)
+  library(RODBC)
+  library(OpenStreetMap)
+  library(BMA)
+  library(MASS)
+  library(rgeos)
+  library(geosphere)
+  library(spgwr)
+  library(spdep)
+  library(car)
+  library(lmtest)
+  library(gstat)
+  library(scales)
+
+```
+
+Then we set the paths to the data and code.
+
+```{r eval=FALSE}  
+
+  data.dir <- 'c:/temp/'
+  code.dir <- 'c:/code/research/REAIA_book/'
+  
+```
+
+We then load the custom functions.
+
+```{r eval=FALSE}  
+
+  source(paste0(code.dir, 'custom_functions.R'))  
+
+```
+
+#### Load Data
+
+We begin by loading the saved R workspace from the modeling chapter (10). 
+
+```{r eval=FALSE}  
+
+  load(file.path(data.dir, 'model_workspace.RData'))
+
+```
+
+Next, we load the three different format of the spatial representations of the police beat boundaries. 
+
+```{r eval=FALSE}  
+
+  load(file=file.path(data.dir, 'geographic/beats.Rdata'))
+
+```
+
+Finally, we load the crime and tweet sentiment data.  First we define the path to the database, set up a connection and then read in both the crime and the tweet data. 
+
+```{r eval=FALSE}  
+
+  # Set database location
+  data.db <- file.path(data.dir, 'seattleCaseStudy.db')
+  
+  # Open connection to database
+  db.conn <- dbConnect(dbDriver('SQLite'), data.db)
+  
+  # Read in Crime data
+  crime.data <- dbReadTable(db.conn, 'Crime')
+  
+  # Read in tweet sentiment data
+  tweet.data <- dbReadTable(db.conn, 'SentimentTweets')
+
+```
+
+#### Relationship between Crime and Price
+
+We begin the case study analysis by looking at the relationship between crime and housing prices in Seattle in 2016. We do so by adding the localized crime counts to our base model (from chapter 10).  
+
+```{r eval=FALSE}  
+
+  crime.lm <- lm(update(as.formula(base.lm), . ~ . + crime.violent + crime.property + crime.traffic +
+                   crime.behavior + crime.other),
+                 data=sales.data)
+  
+```
+
+Noting that spatial autocorrelation was heavily present before, we then re-estimate the 'crime' model with a spatial error specification. To do so, we convert the data to a spatial points data frame, build a spatial weights matrix and then esimate the spatial error model. 
+
+```{r eval=FALSE}  
+
+  # Build Spatial Points Data Frame
+  sales.sp <- SpatialPointsDataFrame(cbind(sales.data$longitude,
+                                           sales.data$latitude),
+                                     sales.data)
+  
+  # Create neighbor list
+  nbList <- knn2nb(knearneigh(sales.sp, 10))
+  
+  # Create Distances
+  nbDists <- nbdists(nbList, sales.sp)    
+  
+  # Build Spatial Weights Matrix
+  swm <- listw2U(nb2listw(nbList, 
+                          glist = lapply(nbDists, dwf),
+                          style="W",
+                          zero.policy=T))
+  
+  # Estimate model
+  crime.se <- errorsarlm(as.formula(crime.lm),
+                         data=sales.sp,
+                         swm,
+                         method="spam", 
+                         zero.policy=TRUE)
+  
+```
+
+Seeing that under the spatial error model there is little remaining influence on price from crime, we also examine if rates of appreciation (not the underlying price levels) bear any relationship to crime levels.  We do this analysis at the beat level -- estimate appreciation vs crime rates per police beat. 
+
+We begin by building a table containing the count of crimes of each type per police beat.
+
+```{r eval=FALSE}  
+
+  beat.crime <- dplyr::group_by(crime.data, zone.beat) %>% 
+    dplyr::summarize(
+      violent=length(which(crime.type =='violent')),
+      property=length(which(crime.type == 'property')),
+      behavior=length(which(crime.type == 'behavior')),
+      traffic = length(which(crime.type == 'traffic')),
+      other = length(which(crime.type == 'other')),
+      all= n())
+
+```
+
+We then calculate the appreciation rate (from Q1 to Q4) for each beat.
+
+To do so, we start by assigning each beat a blank value for appreciation rate and sales count.
+
+```{r eval=FALSE}  
+
+  beat.crime$appr <- 0
+  beat.crime$sales <- 0
+
+```
+
+Next, we loop through each beat
+
+```{r eval=FALSE}  
+
+  for(b in 1:nrow(beat.crime)){
+
+```
+
+Within each iteration, we begin by selecting only those sales within the beat.
+
+```{r eval=FALSE}  
+
+    beat.sales <- sales.data[sales.data$beat == beat.crime$zone.beat[b], ]
+
+```
+
+If there are at least 100 sales in the beat we proceed, if not we give that beat a 0 and disqualify it from the anlaysis. 
+
+```{r eval=FALSE}  
+
+    if(nrow(beat.sales) >= 100){
+
+```      
+      
+We convert the data to a spatial points data frame and then re-build a spatial weights matrix.      
+      
+```{r eval=FALSE}  
+      
+      # Create spatial points data frame
+      beat.sp <- SpatialPointsDataFrame(cbind(beat.sales$longitude,
+                                              beat.sales$latitude),
+                                        beat.sales)
+      
+      # Make neighbors
+      nbList <- knn2nb(knearneigh(beat.sp, 10))
+      
+      # Create Distances
+      nbDists <- nbdists(nbList, beat.sp)    
+      
+      # Building Weights Matrix
+      swm <- listw2U(nb2listw(nbList, 
+                              glist = lapply(nbDists, dwf), 
+                              style="W",
+                              zero.policy=T))
+```      
+      
+We then remove the sales data from the model specification and add quarterly dummy variables. 
+      
+```{r eval=FALSE}  
+      
+      # Create model specification
+      beat.spec <- as.formula(base.lm)
+      beat.spec <- update(beat.spec, ~ . - sales.date)
+      beat.spec <- update(beat.spec, ~ . + as.factor(qtr))
+
+```      
+      
+If there are no waterfront properties in this beat, we remove this variable from the model specification.  If there are only one type of view in the beat we remove that variable as well.       
+      
+```{r eval=FALSE}  
+      
+      # Remove waterfront if none exist
+      if(length(which(beat.sales$is.waterfront == 1)) == 0){
+        beat.spec <- update(beat.spec, ~ . - is.waterfront)
+      }
+      
+      # Remove views if none exist
+      if(length(table(beat.sales$view.best)) <= 1){
+        beat.spec <- update(beat.spec, ~ . - view.best)
+      }
+```      
+      
+Then we estimate a price model for each beat.       
+      
+```{r eval=FALSE}  
+      
+      # Estimate the model
+      beat.se <- tryCatch(errorsarlm(beat.spec,
+                                     data=beat.sp,
+                                     swm, 
+                                     method="spam", 
+                                     zero.policy=TRUE), silent=T)
+```      
+      
+If the model estimation succeeds, we then extract the coefficient indicating the change in prices from 2016 Q1 to 2016 Q4.       
+      
+```{r eval=FALSE}  
+      
+      # If model is successful
+      if(class(beat.se) == 'sarlm'){
+        
+        # Extract all coefficients
+        coefs <- summary(beat.se)$coefficients
+        
+        # Extract quarter 4 appreciation rate
+        b.coef <- coefs[grep('qtr)4', names(coefs))]
+        
+        # Add to the beat summary data frame
+        beat.crime$appr[b] <- b.coef
+        
+        # Add the count of sales to the beat summary data frame
+        beat.crime$sales[b] <- nrow(beat.sales)
+        
+      } else {
+```      
+      
+If the model is unsuccessful or if there are fewer than 100 sales in the beat, then we set the appreciation rate to NA.  This closes the loop through the police beats. 
+
+```{r eval=FALSE}  
+        
+        beat.crime$appr[b] <- NA
+      
+      }
+      
+    } else {
+      
+      beat.crime$appr[b] <- NA
+    }  
+  }
+
+```      
+
+Next, we add the size of each beat to the beat summary data frame. 
+      
+```{r eval=FALSE}  
+
+  beat.crime$area <- beats.sp@data$size[match(beat.crime$zone.beat,
+                                              beats.sp@data$beat)]
+```      
+      
+We then remove all beats for which an appreciation rate was not estimated.       
+      
+```{r eval=FALSE}  
+  
+  beat.crime <- beat.crime[!is.na(beat.crime$appr), ]
+
+```      
+      
+Then, we convert all raw counts of crime into crime per square mile figures.       
+      
+```{r eval=FALSE}  
+  
+  beat.crime$viol.area <- beat.crime$violent / beat.crime$area
+  beat.crime$prop.area <- beat.crime$property / beat.crime$area
+  beat.crime$beha.area <- beat.crime$behavior / beat.crime$area
+  beat.crime$traf.area <- beat.crime$traffic / beat.crime$area
+  beat.crime$othe.area <- beat.crime$other / beat.crime$area
+  beat.crime$all.area <- beat.crime$all / beat.crime$area
+
+```      
+
+Finally, we plot the relationship between price appreciation and crimes per square mile for all of the applicable beats across all five crime types as well as the aggregated count of crimes. 
+      
+```{r eval=FALSE}  
+  
+  # All crime
+  all.crime.plot <- ggplot(beat.crime, 
+                           aes(x=all.area, y=appr)) + 
+                      geom_point() +
+                      stat_smooth(se=FALSE, size=2) +
+                      xlab("Reported Crimes per Sq. Mile") + 
+                      ylab("2016 Appreciation Rate:\nQ1 to Q4\n") + 
+                      ggtitle('All Crime vs Appreciation') +
+                      theme(plot.title = element_text(hjust = 0.5))
+  
+  # Violent crime
+  viol.crime.plot <- ggplot(beat.crime, 
+                           aes(x=viol.area, y=appr)) + 
+    geom_point() +
+    stat_smooth(se=FALSE, size=2) +
+    xlab("Reported Crimes per Sq. Mile") + 
+    ylab("2016 Appreciation Rate:\nQ1 to Q4\n") + 
+    ggtitle('Violent vs Appreciation') +
+    theme(plot.title = element_text(hjust = 0.5))
+
+  # Property crime
+  prop.crime.plot <- ggplot(beat.crime, 
+                            aes(x=prop.area, y=appr)) + 
+    geom_point() +
+    stat_smooth(se=FALSE, size=2) +
+    xlab("Reported Crimes per Sq. Mile") + 
+    ylab("2016 Appreciation Rate:\nQ1 to Q4\n") + 
+    ggtitle('Property vs Appreciation') +
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  # Behavior crime
+  beha.crime.plot <- ggplot(beat.crime, 
+                            aes(x=beha.area, y=appr)) + 
+    geom_point() +
+    stat_smooth(se=FALSE, size=2) +
+    xlab("Reported Crimes per Sq. Mile") + 
+    ylab("2016 Appreciation Rate:\nQ1 to Q4\n") + 
+    ggtitle('Behavioral vs Appreciation') +
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  # Property crime
+  traf.crime.plot <- ggplot(beat.crime, 
+                            aes(x=traf.area, y=appr)) + 
+    geom_point() +
+    stat_smooth(se=FALSE, size=2) +
+    xlab("Reported Crimes per Sq. Mile") + 
+    ylab("2016 Appreciation Rate:\nQ1 to Q4\n") + 
+    ggtitle('Traffic vs Appreciation') +
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  # Other crime
+  othe.crime.plot <- ggplot(beat.crime, 
+                            aes(x=othe.area, y=appr)) + 
+    geom_point() +
+    stat_smooth(se=FALSE, size=2) +
+    xlab("Reported Crimes per Sq. Mile") + 
+    ylab("2016 Appreciation Rate:\nQ1 to Q4\n") + 
+    ggtitle('Other vs Appreciation') +
+    theme(plot.title = element_text(hjust = 0.5))
+
+```      
+  
+#### Relationship between Sentiment and House Prices
+
+The final section of our case study looks at the relationship between local sentiment (as measured by Twitter) and localized house price changes. 
+      
+We begin by converting the tweet data to a SpatialPointsDataFrame.  This includes changing the coordinate reference system.       
+      
+```{r eval=FALSE}  
+  
+  # Conver to SPDF
+  tweet.sp <- SpatialPointsDataFrame(cbind(tweet.data$longitude, tweet.data$latitude),
+                                     data=tweet.data)
+
+  # Fix the coordinate reference system
+  proj4string(tweet.sp) <- CRS(proj4string(beats.sp))
+
+```      
+
+We then make a simple map showing the location of the sentiment-scored tweets.  
+      
+```{r eval=FALSE}  
+  
+ ## Make plot of sentiment tweets
+    
+  sent.map <- ggplot() + 
+    geom_polygon(data=beats.spf, aes(x=long, y=lat, group=beat), 
+                 color='gray40', fill='gray80')+
+    # coord_cartesian(xlim=c(min(sales.data$longitude), max(sales.data$longitude)),
+    #                 ylim=c(min(sales.data$latitude), max(sales.data$latitude))) +
+     geom_point(data=tweet.data, 
+                aes(x=longitude, y=latitude, color=as.factor(SS)), 
+                size=2) +
+    scale_color_manual(values=c('blue', 'red'),
+                       labels=c("Negative   ", 'Positive    '),
+                       name='Sentiment    ') +
+    ylab('') + 
+    xlab('') +
+    theme(legend.position='bottom', 
+          axis.text=element_blank(),
+          axis.ticks = element_blank())
+```      
+
+Next, we take the point data tweets and convert them to a surface (areal coverage) using a custom point to surface function.  (Detailed code on the point to surface process can be found in the *custom_functions.R* file.)
+      
+```{r eval=FALSE}  
+  
+ ## Create sentiment surface
+  
+  # Build surface
+  sent.surf <- point2Surface(twsent.sp, 
+                             twsent.sp$SS, 
+                             res=.004, 
+                             clip=seattle.bound, 
+                             idp.val=5)
+```      
+      
+We extract the values from this surface and convert them to a simple data frame object.      
+      
+```{r eval=FALSE}  
+  
+  surf.df <- data.frame(long=sent.surf@coords[,1],
+                        lat=sent.surf@coords[,2],
+                        sentiment=sent.surf@data$var1.pred)
+  
+```
+
+We then make a map showing the localized sentiment in each area of Seattle. 
+
+```{r eval=FALSE}  
+
+  sent.map <- ggplot(surf.df, aes(x=long, y=lat, z=sentiment)) +
+    geom_tile(aes(fill = sentiment), alpha=.7) +
+    scale_fill_gradient2(low=muted('red'), high=muted('blue'),
+                         name='Sentiment    ',
+                         breaks=c(-.75, 0, .75),
+                         labels=c('Negative', 'Neutral', 'Positive')) + 
+    ylab('') + 
+    xlab('') +
+    ggtitle('Sentiment in Seattle') +
+    theme(legend.position='bottom',
+          legend.key.width=unit(3,'cm'),
+          axis.text=element_blank(),
+          axis.ticks = element_blank(),
+          plot.title = element_text(hjust = 0.5))
+```      
+
+Next, we estimate the local price appreciation at the same scale as the sentiment surface.  To do so, we use a Geographycally Weighted Regression (GWR).
+
+We begin by updating the base regression specification by removing sales date and insert a quarterly dummy variable.  
+      
+```{r eval=FALSE}  
+
+  gwr.spec <- update(as.formula(base.lm), ~ . - sales.date)
+  gwr.spec <- update(gwr.spec, ~ . + as.factor(qtr))
+
+```      
+
+We then convert the sales data into a SpatialPointsDataFrame object. 
+      
+```{r eval=FALSE}  
+  
+  gwr.data <- SpatialPointsDataFrame(cbind(sales.data$longitude,
+                                           sales.data$latitude),
+                                     data=sales.data)
+```      
+      
+And then, estimate a geographically weighted regression, estimating a model at each one of the grid points in the sentiment surface.        
+      
+```{r eval=FALSE}  
+  
+  price.gwr <-gwr(gwr.spec, gwr.data, fit.points=sent.surf@coords, bandwidth=.01)
+
+```      
+
+Next, we extract the coefficients for price appreciation (from Q1 to Q4) from the GWR results and add then to the data frame containing the local sentiment scores. 
+      
+```{r eval=FALSE}  
+  
+  # Extract the coefficients for Q4 appreciations
+  gwr.coef <- price.gwr$SDF@data
+  appr.coef <- gwr.coef[, ncol(gwr.coef)]
+  
+  # Add these to the data frame of surfact values
+  surf.df$appr <- appr.coef
+
+```      
+      
+And finally, we plot the relationship between the local sentiment scores and the local price appreciation.       
+      
+```{r eval=FALSE}  
+  
+  sent.appr.plot <- ggplot(surf.df, aes(x=sentiment, y=appr)) + 
+    geom_point(alpha=.4, size=.9) + 
+    stat_smooth(size=2, se=TRUE, color='red') +
+    scale_y_continuous(breaks=seq(0,.08, .01),
+                       labels=c('0%', '1%', '2%', '3%', '4%', '5%', '6%', '7%', '8%')) +
+    xlab('Sentiment Score') +
+    ylab('Appreciation Rate in 2016\n') +
+    # coord_cartesian(ylim=c(-.07, .17)) + 
+    ggtitle('Local House Appreciation vs Sentiment') +
+    theme(plot.title = element_text(hjust = 0.5))
+
+```      
+      
+#### Save workspace for Case Study analysis
+
+We conclude the case studies by save the entire workspace to an R data object for future tasks such as visualization. 
+
+```{r eval=FALSE}  
+  
+  save.image(file.path(data.dir, 'casestudy_workspace.RData'))
+  
+```
 
