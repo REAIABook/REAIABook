@@ -1,50 +1,44 @@
----
-title: "Real Estate Analysis in the Information Age: Techniques for Big Data and Statistical Modeling"
-author: "Guide to Using the Code Supplied with the Book"
-date: "August 3, 2017"
-output:
-  md_document:
-    variant: markdown_github
----
+The examples and the case studies presented in this book are conducted in the R computing language.[1] All data and code necessary to reproduce the cast studies are provided on this website or are downloadable free of charge from the internet. The code for each chapter (found at <https://github.com/REAIABook/REAIABook>) can be run to reproduce the examples and analyses that are found throughout the book.
 
-The examples and the case studies presented in this book are conducted in the R computing language.^[R Core Team (2017). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL <https://www.R-project.org/>.]  All data and code necessary to reproduce the cast studies are provided on this website or are downloadable free of charge from the internet.  The code for each chapter (found at <https://github.com/REAIABook/REAIABook>) can be run to reproduce the examples and analyses that are found throughout the book.    
+Before you start, you need to do two things.
 
-Before you start, you need to do two things.  
+1.  Download R from <https://cran.r-project.org/bin/windows/base/> and install.
+2.  Download RStudio from <https://www.rstudio.com/products/rstudio/download/.> and install.
+    Note that RStudio is not necessary but it is a helpful interactive development environment (IDE) that will make working with the provided R code easier. The code below was built in 64-bit R, version 3.4.0.
 
-1.  Download R from <https://cran.r-project.org/bin/windows/base/> and install.  
-2.  Download RStudio from <https://www.rstudio.com/products/rstudio/download/.> and install.    
-Note that RStudio is not necessary but it is a helpful interactive development environment (IDE) that will make working with the provided R code easier.  The code below was built in 64-bit R, version 3.4.0.     
+Once you have opened this can you move on to the code from the individual chapters. Do note that in many cases, code from one chapter depends on code and analyses performed in a previous chapter. You should also set aside a directory on your computer where you can save the raw and intermediate data as well as the outputs from the graphing and modeling exercises. You will need to manually input this directory into the code for each chapter starting in chapter 5. The code is written into modules by chapter, with the intent that each can be executed independently and as a result preliminary or setup commands are entered at the beginning of each chapter's code.
 
-Once you have opened this can you move on to the code from the individual chapters. Do note that in many cases, code from one chapter depends on code and analyses performed in a previous chapter.  You should also set aside a directory on your computer where you can save the raw and intermediate data as well as the outputs from the graphing and modeling exercises.  You will need to manually input this directory into the code for each chapter starting in chapter 5.  The code is written into modules by chapter, with the intent that each can be executed independently and as a result preliminary or setup commands are entered at the beginning of each chapter's code.      
+Finally, please note that the code below has been written with the aim of readability and exposure to different approaches to solving the same tasks and not with the sole aim of efficiency. Please do issue pull requests for errors (which are likely) but not for improvements to code efficiency.
 
-Finally, please note that the code below has been written with the aim of readability and exposure to different approaches to solving the same tasks and not with the sole aim of efficiency. Please do issue pull requests for errors (which are likely) but not for improvements to code efficiency. 
-
-## Introduction
+Introduction
+------------
 
 How to get the code and data from this site:
 
-There are two primary ways to get the code and data from this site. 
+There are two primary ways to get the code and data from this site.
 
-1. If you don't have a Github account you can click on the green "Clone or Download" button and download a .ZIP file and extract the files on your computer.
+1.  If you don't have a Github account you can click on the green "Clone or Download" button and download a .ZIP file and extract the files on your computer.
 
-2. If you have a Github account, download and install the Github desktop application.  Make sure you are logged in in the application.  Then click the green "Clone or Download" button and select "Open in Desktop" and follow the instructions to clone (copy) the files to your computer. 
+2.  If you have a Github account, download and install the Github desktop application. Make sure you are logged in in the application. Then click the green "Clone or Download" button and select "Open in Desktop" and follow the instructions to clone (copy) the files to your computer.
 
-Also you should allocate a directory for the data that will be downloaded in the code that has at least 2 GB of open space.  This should be used as the data dirctory (**data.dir**) in the code. 
+Also you should allocate a directory for the data that will be downloaded in the code that has at least 2 GB of open space. This should be used as the data dirctory (**data.dir**) in the code.
 
-## Chapter 1
-
-No code
-
-## Chapter 2
+Chapter 1
+---------
 
 No code
 
-## Chapter 3
+Chapter 2
+---------
 
-In chapter 3, we install the necessary packages that we will use throughout this book. You can either copy the code below directly into the 'console' window of RStudio or you can open the *software.r* file and execute it in its entirety with **cntl-enter**.  If asked to choose a mirror for downloading the packages, any will do but the one closest to you is likely to be fastest.     
+No code
 
-```{r eval=FALSE}
+Chapter 3
+---------
 
+In chapter 3, we install the necessary packages that we will use throughout this book. You can either copy the code below directly into the 'console' window of RStudio or you can open the *software.r* file and execute it in its entirety with **cntl-enter**. If asked to choose a mirror for downloading the packages, any will do but the one closest to you is likely to be fastest.
+
+``` r
   install.packages('tidyverse')
   install.packages('sf')
   install.packages('sp')
@@ -63,45 +57,41 @@ In chapter 3, we install the necessary packages that we will use throughout this
   install.packages('lmtest')
   install.packages('plm')
   install.packages('scales')
-
 ```
 
-After you have installed the above libraries you can move on to the code for chapter 5. 
+After you have installed the above libraries you can move on to the code for chapter 5.
 
-## Chapter 4
+Chapter 4
+---------
 
 No Code
 
-## Chapter 5
+Chapter 5
+---------
 
-In chapter 5 we gather data from a variety of sources for the two case studies that will run in parallel to this book. The code below will download and unzip the necessary data to reproduce the case studies used in this book. This data will also be used to create the example plots and tables throughout the book. The user will have to specify a particular directory in which the data will be located.  A code directory (the directory in which you downloaded the code from the Introduction chapter) will also need to be specified.  
+In chapter 5 we gather data from a variety of sources for the two case studies that will run in parallel to this book. The code below will download and unzip the necessary data to reproduce the case studies used in this book. This data will also be used to create the example plots and tables throughout the book. The user will have to specify a particular directory in which the data will be located. A code directory (the directory in which you downloaded the code from the Introduction chapter) will also need to be specified.
 
-Please note that, depending on your internet speed, the initial downloading of the files may take some time. Note that once the raw files are downloaded, the code will recognize their existance and not download them again if you run the code a second time, so long as you do not move the files from their downloaded location. Also, you will need at least 2.5 GB of space^[This can be reduced by deleted the downloaded ZIP files after extraction.] in the directory that you indicate in the **data.dir** parameter below.  
+Please note that, depending on your internet speed, the initial downloading of the files may take some time. Note that once the raw files are downloaded, the code will recognize their existance and not download them again if you run the code a second time, so long as you do not move the files from their downloaded location. Also, you will need at least 2.5 GB of space[2] in the directory that you indicate in the **data.dir** parameter below.
 
 ### Gathering the Data
 
-Before executing the code file *gather.R*, the user must specify the directory into which the downloaded data will be stored, unzipped, etc.  In the example below we have used **c:/temp/** as the directory.  You should delete this and use a directory of your choice. 
+Before executing the code file *gather.R*, the user must specify the directory into which the downloaded data will be stored, unzipped, etc. In the example below we have used **c:/temp/** as the directory. You should delete this and use a directory of your choice.
 
-```{r eval=FALSE}
-
+``` r
   data.dir <- 'c:/temp/'
-
 ```
 
-Next, we check to see if a sub-directory to store the raw zip files exists.  If not, we create one called *raw_zip_files*. 
+Next, we check to see if a sub-directory to store the raw zip files exists. If not, we create one called *raw\_zip\_files*.
 
-```{r eval=FALSE}
-
+``` r
   if (!dir.exists(file.path(data.dir, 'raw_zip_files'))){
     dir.create(file.path(data.dir, 'raw_zip_files'))
   }
-
 ```
 
-We now check to see if the GIS shapefile of the Seattle Police Department Beat Districts has already been downloaded.  If not, we download it from the internet. 
+We now check to see if the GIS shapefile of the Seattle Police Department Beat Districts has already been downloaded. If not, we download it from the internet.
 
-```{r eval=FALSE}
-
+``` r
   # Check if file exists
   if (!file.exists(file.path(data.dir, 'raw_zip_files', 'beats.zip'))){
   
@@ -110,14 +100,11 @@ We now check to see if the GIS shapefile of the Seattle Police Department Beat D
                          '96d998d4-ae20-4ea8-b912-436e68982a0d.zip'), 
                   destfile=file.path(data.dir, 'raw_zip_files', 'beats.zip'))
   }  
- 
-
 ```
 
-We then check to see if a separate directory for the beats data exists.  If it doesn't we create it.  We then unzip the **beats.zip** file into the new *beats* directory.  
+We then check to see if a separate directory for the beats data exists. If it doesn't we create it. We then unzip the **beats.zip** file into the new *beats* directory.
 
-```{r eval=FALSE}
-
+``` r
   # Create a directory for beats data if one doesn't exist
   if (!dir.exists(file.path(data.dir, 'beats'))){
     dir.create(file.path(data.dir, 'beats'))
@@ -126,13 +113,11 @@ We then check to see if a separate directory for the beats data exists.  If it d
   # Unzip the files
   unzip(zipfile=file.path(data.dir, 'raw_zip_files', 'beats.zip'),
         exdir=file.path(data.dir, 'beats'))
-
 ```
 
-Next, we  download the property parcel (cadastre) shapefile (if not done so in the past).  We then create a separate sub-directory for the geographic data (if not already present) and then and unzip it into the *geographic* sub-directory.  
+Next, we download the property parcel (cadastre) shapefile (if not done so in the past). We then create a separate sub-directory for the geographic data (if not already present) and then and unzip it into the *geographic* sub-directory.
 
-```{r eval=FALSE}
-
+``` r
   # Check if file exists
   if(!file.exists(file.path(data.dir, 'raw_zip_files', 'parcel_shapefile.zip'))){
     
@@ -150,24 +135,20 @@ Next, we  download the property parcel (cadastre) shapefile (if not done so in t
   # Unzip the files
   unzip(zipfile=file.path(data.dir, 'raw_zip_files', 'parcel_shapefile.zip'), 
         exdir=file.path(data.dir, 'geographic'))
-
 ```
 
-Finally, we gather the county assessor data.  This includes sales transactions, information about the land parcel and information about the residential buildings.  Before we download any data we create a sub-directory called *assessor* if one doesn't already exist.  
+Finally, we gather the county assessor data. This includes sales transactions, information about the land parcel and information about the residential buildings. Before we download any data we create a sub-directory called *assessor* if one doesn't already exist.
 
-```{r eval=FALSE}
-
+``` r
   # Create a directory if one doesn't exist
   if(!dir.exists(file.path(data.dir, 'assessor'))){
     dir.create(file.path(data.dir, 'assessor'))
   }
-
 ```
 
 We start by downloading the sales transaction file, if it does not already exist. Once downloaded, it is unzipped into the *assessor* sub-directory.
 
-```{r eval=FALSE}
-
+``` r
   # Check if file exists
   if (!file.exists(file.path(data.dir, 'raw_zip_files', 'sales.zip'))){
     
@@ -180,13 +161,11 @@ We start by downloading the sales transaction file, if it does not already exist
   # Unzip
   unzip(zipfile=file.path(data.dir, 'raw_zip_files', 'sales.zip'), 
         exdir=file.path(data.dir, 'assessor'))
-
 ```
 
-We then do the same for the parcel and the residential building (resbldg) information. 
-  
-```{r eval=FALSE}
+We then do the same for the parcel and the residential building (resbldg) information.
 
+``` r
  ## Parcel Tabular File
 
   # Check if file exists
@@ -200,11 +179,9 @@ We then do the same for the parcel and the residential building (resbldg) inform
   # Unzip
   unzip(zipfile=file.path(data.dir, 'raw_zip_files', 'parcel.zip'), 
         exdir=file.path(data.dir, 'assessor'))
-  
-```    
-  
-```{r eval=FALSE} 
+```
 
+``` r
  ## Residential Building File  
   
   # Check if file exists
@@ -219,13 +196,11 @@ We then do the same for the parcel and the residential building (resbldg) inform
   # Unzip
   unzip(zipfile=file.path(data.dir, 'raw_zip_files', 'resbldg.zip'), 
         exdir=file.path(data.dir, 'assessor'))
-
 ```
 
-We then add the crime report statisitics from the City of Seattle, downloading them into the 'crime' directory. 
+We then add the crime report statisitics from the City of Seattle, downloading them into the 'crime' directory.
 
-```{r eval=FALSE} 
-
+``` r
   # Create a directory for assessor data if one doesn't exist
   if (!dir.exists(file.path(data.dir, 'crime'))){
     dir.create(file.path(data.dir, 'crime'))
@@ -235,13 +210,11 @@ We then add the crime report statisitics from the City of Seattle, downloading t
   download.file(url=paste0('https://data.seattle.gov/api/views/7ais-f98f/rows.csv?',
                            'accessType=DOWNLOAD'), 
                 destfile=file.path(data.dir, 'crime', 'seattle_crime.csv' ))
-
 ```
 
-And finally, we download the pre-analyzed twitter sentiment data from the REAIABook Github site and place in the 'tweets' directory. 
+And finally, we download the pre-analyzed twitter sentiment data from the REAIABook Github site and place in the 'tweets' directory.
 
-```{r eval=FALSE} 
-
+``` r
   # Create a directory for assessor data if one doesn't exist
   if (!dir.exists(file.path(data.dir, 'tweets'))){
     dir.create(file.path(data.dir, 'tweets'))
@@ -251,57 +224,48 @@ And finally, we download the pre-analyzed twitter sentiment data from the REAIAB
   download.file(url=paste0('http://raw.githubusercontent.com/REAIABook/',
                            'REAIABook/master/tweetSentiment.csv'), 
                 destfile=file.path(data.dir, 'tweets', 'sentimenttweets.csv' ))
-
 ```
 
-## Chapter 6
+Chapter 6
+---------
 
-Chapter 6 discusses data management.  In the code below we move the raw, downloaded tabular data into a database format, adding unique identifiers in the process.  For the geo-spatial data we convert the shapefiles to an R data objects and re-project the coordinates to match a standard coordinate reference system format. 
+Chapter 6 discusses data management. In the code below we move the raw, downloaded tabular data into a database format, adding unique identifiers in the process. For the geo-spatial data we convert the shapefiles to an R data objects and re-project the coordinates to match a standard coordinate reference system format.
 
-We begin the process by loading a number of packages or libraries that will be needed to complete this process.  These packages were installed on your machine with the code from Chapter 3 above.  These packages are developed by third-party users to augment the R language and represent one of the great benefits of using R.  
+We begin the process by loading a number of packages or libraries that will be needed to complete this process. These packages were installed on your machine with the code from Chapter 3 above. These packages are developed by third-party users to augment the R language and represent one of the great benefits of using R.
 
-```{r eval=FALSE}
-
+``` r
   library(RSQLite)
   library(RODBC)
   library(tidyverse)
   library(maptools)
   library(sf)
   library(sp)
-
 ```
 
-Next, the user must enter the directory where the data is stored, **data.dir** and the directory where the code has been downloaded, **code.dir**. Both directories should be identical to the directories entered in Chapter 5. 
+Next, the user must enter the directory where the data is stored, **data.dir** and the directory where the code has been downloaded, **code.dir**. Both directories should be identical to the directories entered in Chapter 5.
 
-```{r eval=FALSE}
-
+``` r
   data.dir <- 'c:/temp/'             # For Example
   code.dir <- 'c:/code/REAIA_Book/'  # For Example
-
 ```
 
-We load in a set of custom functions that have been developed to help with the data integration and cleaning process. 
+We load in a set of custom functions that have been developed to help with the data integration and cleaning process.
 
-```{r eval=FALSE}
-
+``` r
  source(file.path(code.dir, 'custom_functions.R'))
-
 ```
 
-We also create a name and path for the database into which we'll integrate all of the data. 
+We also create a name and path for the database into which we'll integrate all of the data.
 
-```{r eval=FALSE}
-
+``` r
   data.db <- file.path(data.dir, 'seattleCaseStudy.db')
-
 ```
 
 ### Manage Assessors data
 
-To better manage the various assessor's data files -- the sales, parcel and residential building information -- we combine them into a single SQLite database.  This also allows for greater portability of the files.  This same database will contain the various iterations of the cleaned sales data as well.  The **convertCSVtoSQLite()** function is a custom function that we have developed for the task of combining various CSV files into a single SQLite database. If you don't want to see the progress of the process you can change the *verbose* argument to FALSE. 
+To better manage the various assessor's data files -- the sales, parcel and residential building information -- we combine them into a single SQLite database. This also allows for greater portability of the files. This same database will contain the various iterations of the cleaned sales data as well. The **convertCSVtoSQLite()** function is a custom function that we have developed for the task of combining various CSV files into a single SQLite database. If you don't want to see the progress of the process you can change the *verbose* argument to FALSE.
 
-```{r eval=FALSE}
- 
+``` r
  ## Convert CSVs to SQLite
 
  if (!file.exists(data.db)){
@@ -319,29 +283,25 @@ To better manage the various assessor's data files -- the sales, parcel and resi
                       verbose=TRUE,
                       writeRowNames=FALSE)
   }
-
 ```
 
 #### Sales data unique identifiers
 
-In this section we create a set of unique identifiers for the sales data.  
+In this section we create a set of unique identifiers for the sales data.
 
 We start by opening a connection to the SQL database that we created above and reading in the raw sales information.
 
-```{r eval=FALSE}
-
+``` r
   # Set connection
   db.conn <- dbConnect(dbDriver('SQLite'), data.db)
   
   # Read in sales data
   sales.data <- dbReadTable(db.conn, 'Sales')
-
 ```
 
-We then use a multiple step process to create a unique identifer field, based on the excise tax affidavit number.  We begin by creating a new field called **UID** that contains the excise tax number.  We then re-order the columns to put this value on the far left and then sort the data by the **UID** field.
+We then use a multiple step process to create a unique identifer field, based on the excise tax affidavit number. We begin by creating a new field called **UID** that contains the excise tax number. We then re-order the columns to put this value on the far left and then sort the data by the **UID** field.
 
-```{r eval=FALSE}
-
+``` r
   # Make new UID from ExciseTaxNbr
   sales.data <- dplyr::mutate(sales.data, UID=ExciseTaxNbr)
   
@@ -350,35 +310,29 @@ We then use a multiple step process to create a unique identifer field, based on
 
   # Order by that field
   sales.data <- dplyr::arrange(sales.data, UID)
+```
 
-```  
-  
-As some of these numbers are duplicates due to multiple parcel (or property) sales, we must do a little more work to make this a unique identifier.  First, we create a separate data frame of those excise tax numbers that appear more than once.  
+As some of these numbers are duplicates due to multiple parcel (or property) sales, we must do a little more work to make this a unique identifier. First, we create a separate data frame of those excise tax numbers that appear more than once.
 
-```{r eval=FALSE}
-  
+``` r
   uid.mult <- sales.data %>% 
     dplyr::group_by(UID) %>%
       dplyr::summarize(rec.count=n()) %>%
        dplyr::filter(rec.count > 1)
-  
 ```
 
 Second, we create a vector showing the count or number of times each of the duplicated UIDs appear.
 
-```{r eval=FALSE}
-
+``` r
   # Develop a list full of proper suffixes
   uid.suffix <- lapply(split(uid.mult, uid.mult$UID), 
                        function(x) 1:(x$rec.count))
   names(uid.suffix) <- NULL
-  
 ```
 
-We then add these counts (suffix) to the sales data.  Those with a UID that is unique receive a 0. Finally, we add the suffix value to the original UID to make an actual unique identifier.  The suffix field is removed. 
+We then add these counts (suffix) to the sales data. Those with a UID that is unique receive a 0. Finally, we add the suffix value to the original UID to make an actual unique identifier. The suffix field is removed.
 
-```{r eval=FALSE}
-
+``` r
   # Apply suffix to sales.data
   sales.data$uid.suffix <- 0
   sales.data$uid.suffix[sales.data$UID %in% uid.mult$UID] <- unlist(uid.suffix)
@@ -390,26 +344,22 @@ We then add these counts (suffix) to the sales data.  Those with a UID that is u
   
   # Remove uid.suffix field
   sales.data$uid.suffix <- NULL
-
 ```
 
-We write this data back to the database, removing the old table first. 
-  
-```{r eval=FALSE}
-  
+We write this data back to the database, removing the old table first.
+
+``` r
   dbRemoveTable(db.conn, 'Sales')
   dbWriteTable(db.conn, 'Sales', sales.data, row.names=FALSE)
-  
 ```
 
 #### Parcel and res bldg data unique identifiers
 
-Here we add unique identifiers to the King County Assessors parcel and residential building tabular data.  The unique identifiers (**pinx**) are simply an extension of the County's parcel identification numbers (PINs) where we add two leading '.'s in order to avoid dropped leading zeros in future uses. A custom function call **buildPinx()** is used to accomplish this.  Full code for the **buildPinx()** function can be found in the *custom_functions.R* file.
+Here we add unique identifiers to the King County Assessors parcel and residential building tabular data. The unique identifiers (**pinx**) are simply an extension of the County's parcel identification numbers (PINs) where we add two leading '.'s in order to avoid dropped leading zeros in future uses. A custom function call **buildPinx()** is used to accomplish this. Full code for the **buildPinx()** function can be found in the *custom\_functions.R* file.
 
-We start by reading the raw parcel tabular data, creating the **pinx** unique identifier and then writing it back to the database.  
+We start by reading the raw parcel tabular data, creating the **pinx** unique identifier and then writing it back to the database.
 
-```{r eval=FALSE}
-
+``` r
   # Read in data
   parcel.data <- dbReadTable(db.conn, 'Parcel')
   
@@ -419,13 +369,11 @@ We start by reading the raw parcel tabular data, creating the **pinx** unique id
   # Write out
   dbRemoveTable(db.conn, 'Parcel')
   dbWriteTable(db.conn, 'Parcel', parcel.data, row.names=FALSE)
-  
 ```
 
-We then do the same with the residential building tabular data. As some properties have more than one residential building a suffix is added here to indicate which building it is.  
+We then do the same with the residential building tabular data. As some properties have more than one residential building a suffix is added here to indicate which building it is.
 
-```{r eval=FALSE}
-  
+``` r
   # Read in data
   resbldg.data <- dbReadTable(db.conn, 'ResBldg')
   
@@ -439,43 +387,35 @@ We then do the same with the residential building tabular data. As some properti
   # Write out
   dbRemoveTable(db.conn, 'ResBldg')
   dbWriteTable(db.conn, 'ResBldg', resbldg.data, row.names=FALSE)
-
 ```
 
 As we have loaded a number of large datasets, we clean our our working RAM here.
 
-```{r eval=FALSE}
-
+``` r
   rm(resbldg.data); rm(parcel.data); rm(sales.data)
   gc()
-
 ```
 
 #### Parcel Shapefile conversion
 
-We now load in the parcel shapefile and convert it from a polygon to a point coverage.  We also change the coordinate reference system.  
+We now load in the parcel shapefile and convert it from a polygon to a point coverage. We also change the coordinate reference system.
 
 We start by loading the parcel shapefile from the King County GIS department into R as a simple features object (sf).
 
-```{r eval=FALSE}
-  
+``` r
   parcels <- st_read(file.path(data.dir, 'geographic', 'parcel', 'parcel.shp'), 
                      quiet=TRUE)
-
 ```
 
-We then transform the coordinate reference system to match the other spatial data we will use later. 
+We then transform the coordinate reference system to match the other spatial data we will use later.
 
-```{r eval=FALSE}
-
+``` r
   parcels <- st_transform(parcels, 4326)
-  
 ```
 
-We then extract the centroid of each parcel polygon and conver this to a simple features data frame.  We add the parcel identification number to each point as the unique identifier. 
+We then extract the centroid of each parcel polygon and conver this to a simple features data frame. We add the parcel identification number to each point as the unique identifier.
 
-```{r eval=FALSE}
-
+``` r
   # Extract centroid Lat longs
   parcel.centroids <- st_centroid(parcels)
   
@@ -484,45 +424,37 @@ We then extract the centroid of each parcel polygon and conver this to a simple 
   
   # Add PIN values
   parcel.centroids$PIN <- parcels$PIN
-  
 ```
 
-Finally, we save this object as an .Rdata file for faster loading in the future. 
+Finally, we save this object as an .Rdata file for faster loading in the future.
 
-```{r eval=FALSE}
-  
+``` r
   save(parcel.centroids, file=file.path(data.dir, 'geographic', 'parcelcentroids.Rdata'))
-
 ```
 
 #### Add in Crime Beat Data
 
-Now we load in the crime data and add it to the database.  
+Now we load in the crime data and add it to the database.
 
 First we load the crime data from the .csv file downloaded from the City of Seattle.
 
-```{r eval=FALSE}
-
+``` r
   crime.data <- read.csv(file.path(data.dir, 'crime', 'seattle_crime.csv'))
-
 ```
-  
-We then convert all of the field names to lower case and rename the unique identifier field to a simpler name, uid.  
-  
-```{r eval=FALSE}  
-  
+
+We then convert all of the field names to lower case and rename the unique identifier field to a simpler name, uid.
+
+``` r
   # Convert to lower case
   names(crime.data) <- tolower(names(crime.data))
   
   # Rename unique identifier
   names(crime.data)[1] <- 'uid'
-  
 ```
 
-We then write these data to the database, removing the existing table if necessary. 
-  
-```{r eval=FALSE}
+We then write these data to the database, removing the existing table if necessary.
 
+``` r
   # Check if exists and remove
   if(dbExistsTable(db.conn, 'Crime')){
     dbRemoveTable(db.conn, 'Crime')
@@ -530,17 +462,15 @@ We then write these data to the database, removing the existing table if necessa
 
   # Write to database
   dbWriteTable(db.conn, 'Crime', crime.data, row.names=FALSE)
-
 ```
 
-#### Add Twitter sentiment data to database    
+#### Add Twitter sentiment data to database
 
-We now add the twitter sentiment data (available from the REAIA Github site) to the database. 
+We now add the twitter sentiment data (available from the REAIA Github site) to the database.
 
-First we load in the sentiment scored tweets directly from the Github site.  
+First we load in the sentiment scored tweets directly from the Github site.
 
-```{r eval=FALSE}  
-
+``` r
  # Read in tweet sentiment data  
   tweet.sent <- read.csv(file.path(data.dir, 'tweets', 'sentimenttweets.csv'),
                          header=TRUE)
@@ -552,81 +482,67 @@ First we load in the sentiment scored tweets directly from the Github site.
   
   # Write to database
   dbWriteTable(db.conn, 'SentimentTweets', tweet.sent, row.names=FALSE)
-
 ```
 
 #### Police Beat Spatial Data
 
 Finally, we manage the Seattle Police Beat spatial data.
 
-We begin by reading in the police beat boundaries as a simple features polygon object. 
+We begin by reading in the police beat boundaries as a simple features polygon object.
 
-```{r eval=FALSE}  
-
+``` r
   beats <- st_read(file.path(data.dir, 'beats', 'SPD_BEATS_WGS84.shp'), 
                    quiet=TRUE)
-
 ```
 
 We then transform the coordinate reference system.
 
-```{r eval=FALSE}  
-
+``` r
   beats <- st_transform(beats, 4326)
-
 ```
 
-As we will work with other spatial packages in later analyses, we also convert simple features (sf) object to a an *sp* object (an earlier form of spatial handling in R). To this, we add the beat numbers as a unique identifier. 
-  
-```{r eval=FALSE}  
-  
+As we will work with other spatial packages in later analyses, we also convert simple features (sf) object to a an *sp* object (an earlier form of spatial handling in R). To this, we add the beat numbers as a unique identifier.
+
+``` r
   # Convert to sp object
   beats.sp <- as(beats, 'Spatial')
 
   # Add id and beat numbers
   beats.sp@data$id <- paste0("ID", 1:nrow(beats.sp@data))
-
 ```
 
-We then also convert the police beat coverage into a simple data frame format (fortified) that can be plotted in ggplot. This includes adding the beat identification code to the data frame. 
-  
-```{r eval=FALSE}  
+We then also convert the police beat coverage into a simple data frame format (fortified) that can be plotted in ggplot. This includes adding the beat identification code to the data frame.
 
+``` r
   # Convert to a fortified object (data.frame)
   beats.spf <- broom::tidy(beats.sp)
   
   # Add beat id
   beats.spf$beat <- beats.sp@data$beat[match(beats.spf$id, 
                                              beats.sp@data$id)]
-  
 ```
 
-Finally, we save all three object types of the beat polygon data to an r workspace for easier loading later on. 
+Finally, we save all three object types of the beat polygon data to an r workspace for easier loading later on.
 
-```{r eval=FALSE}  
-
+``` r
   save(beats, beats.sp, beats.spf, 
        file= file.path(data.dir, 'geographic', 'beats.Rdata'))
-
 ```
 
-We finish the manage stage of our analysis by closing the connection to the database. 
+We finish the manage stage of our analysis by closing the connection to the database.
 
-```{r eval=FALSE}  
-
+``` r
   dbDisconnect(db.conn)
-
 ```
 
+Chapter 7
+---------
 
-## Chapter 7
+In chapter 7 we discuss data preparation. In it we transform, integrate and filter our data.
 
-In chapter 7 we discuss data preparation.  In it we transform, integrate and filter our data.  
+We begin with a set of prelimnary commands. Specifically, we load the necessary libraries, set our directory paths and load our custom functions.
 
-We begin with a set of prelimnary commands.  Specifically, we load the necessary libraries, set our directory paths and load our custom functions.
-
-```{r eval=FALSE}  
-
+``` r
  ## Load Libraries
 
   library(sf)
@@ -645,48 +561,39 @@ We begin with a set of prelimnary commands.  Specifically, we load the necessary
  ## Load custom source files
   
   source(paste0(code.dir, 'custom_functions.R'))  
-
 ```
 
-We then set the path to our active database and establish a connection to it. 
+We then set the path to our active database and establish a connection to it.
 
-```{r eval=FALSE}  
-
+``` r
   # Specify path to database
   data.db <- file.path(data.dir, 'seattleCaseStudy.db')
 
   # Establish connection to database
   db.conn <- dbConnect(dbDriver('SQLite'), data.db)
- 
-
 ```
 
 #### Preparing Sales Data
 
-We start the process by preparing the sales data.  First, we load the data from the database
+We start the process by preparing the sales data. First, we load the data from the database
 
-```{r eval=FALSE}  
-
+``` r
   sales.data <- dbReadTable(db.conn, 'Sales')
-  
 ```
 
-First we filter out observations that are missing critical information; parcel identification numbers and sale prices.  Those with missing sale price or prices of 0 are usually non arm's length transactions which are not relevant to our analysis.  
+First we filter out observations that are missing critical information; parcel identification numbers and sale prices. Those with missing sale price or prices of 0 are usually non arm's length transactions which are not relevant to our analysis.
 
-```{r eval=FALSE}  
-  
+``` r
   # Filter those missing PIN numbers
   sales.data <- dplyr::filter(sales.data, Major > 0)
   
   # Filter those with sale price of 0
   sales.data <- dplyr::filter(sales.data, SalePrice > 0)
-  
 ```
 
-Next we perform a number of options of options to transform and then filter on the sale date.  We begin by re-ordering the sales date into a standard month/date/year format and then convert this to a 'date' data type within R.
+Next we perform a number of options of options to transform and then filter on the sale date. We begin by re-ordering the sales date into a standard month/date/year format and then convert this to a 'date' data type within R.
 
-```{r eval=FALSE}  
-  
+``` r
   # Re-order date field
   sales.data <- dplyr::mutate(.data=sales.data,
                               doc.date = paste0(substr(DocumentDate, 4, 5),
@@ -695,82 +602,66 @@ Next we perform a number of options of options to transform and then filter on t
   # Mutate new sale date field into R date format
   sales.data <- dplyr::mutate(.data=sales.data,
                               sales.date = as.Date(doc.date, "%d%m%Y"))
-  
 ```
 
 Then we create a sales year field
 
-```{r eval=FALSE}  
-  
+``` r
   sales.data <- dplyr::mutate(.data=sales.data,
                               sales.year = as.numeric(format(sales.date, "%Y")))
-  
 ```
 
-Next, the extra date field that are no longer needed are removed.  
+Next, the extra date field that are no longer needed are removed.
 
-```{r eval=FALSE}  
-
+``` r
   sales.data <- dplyr::mutate(.data=sales.data,
                               doc.date = NULL)
   sales.data <- dplyr::mutate(.data=sales.data,
                               DocumentDate = NULL)
-
 ```
 
-Sales which are missing sales dates are then filtered out. 
-  
-```{r eval=FALSE}  
-  
+Sales which are missing sales dates are then filtered out.
+
+``` r
   sales.data <- dplyr::filter(.data=sales.data,
                               !is.na(sales.date))
-
 ```
 
 Next, we limit the data to sales from the year 2016
 
-```{r eval=FALSE}  
-
+``` r
   sales.data <- dplyr::filter(.data=sales.data,
                               sales.year == 2016)
-
 ```
 
 We then add fields denoting the quarter of sales (Q1 to Q4) and the month of sale (1 to 12)
 
-```{r eval=FALSE}  
-
+``` r
   # Add qtr field 
   sales.data$month <- as.numeric(substr(sales.data$sales.date, 6, 7))
   
   # Add month field
   sales.data$qtr <- ((sales.data$month - 1) %/% 3) + 1
-  
 ```
 
 We now turn to other transformation and filters.
 
-First, we convert the two-piece parcel identification number (PIN) into a single value, **pinX** that will link to the ID created for the geographical shapefile.  
+First, we convert the two-piece parcel identification number (PIN) into a single value, **pinX** that will link to the ID created for the geographical shapefile.
 
-```{r eval=FALSE}  
-
+``` r
   sales.data <- buildPinx(X=sales.data)
- 
 ```
 
-Some property show an abnormally high number of transactions.  We filter out any property that has transacted more than five time during the study period. (For all custom functions see the *custom_functions.R* file.)
+Some property show an abnormally high number of transactions. We filter out any property that has transacted more than five time during the study period. (For all custom functions see the *custom\_functions.R* file.)
 
-```{r eval=FALSE}  
-
+``` r
   sales.data <- buildTransCount(x.sales=sales.data, 
                                 trans.limit=5)
-  
 ```
 
-We then label and remove all transactions that include more than one parcel. 
+We then label and remove all transactions that include more than one parcel.
 
-```{r eval=FALSE}  
-
+``` r
   # Mutate: Add MultiParcel sale designation (custom function)
   sales.data <- idDup(x.data=sales.data, 
                       x.field='ExciseTaxNbr', 
@@ -781,33 +672,26 @@ We then label and remove all transactions that include more than one parcel.
   # Filter those with multiparcel
   sales.data <- dplyr::filter(.data=sales.data,
                               multi.parcel == 0)
-  
-```  
-  
-Next, we create a new unique identifier that is transaction (and not property) related. This step occurs here instead of in the 'manage' section due to its dependency on the previous filter and transform activities.   
-  
-```{r eval=FALSE}  
-  
-  sales.data <- buildSaleUIDs(sales.data) 
-
 ```
 
-The King County Assessor provides three labels for each transaction, one indicating the type of instrument (or document) used to transfer title, one listing the stated reason for the sale and one with a set of warning codes generated by the assessor. We will filter the sales data by each of these fields. 
+Next, we create a new unique identifier that is transaction (and not property) related. This step occurs here instead of in the 'manage' section due to its dependency on the previous filter and transform activities.
 
-First, we add a set of leading and trailing spaces around the sale warning field to make parsing of the codes easier. 
+``` r
+  sales.data <- buildSaleUIDs(sales.data) 
+```
 
-```{r eval=FALSE}  
+The King County Assessor provides three labels for each transaction, one indicating the type of instrument (or document) used to transfer title, one listing the stated reason for the sale and one with a set of warning codes generated by the assessor. We will filter the sales data by each of these fields.
 
+First, we add a set of leading and trailing spaces around the sale warning field to make parsing of the codes easier.
+
+``` r
   sales.data <- dplyr::mutate(sales.data,
                               SaleWarning = paste0(" ", SaleWarning, " "))
-
 ```
 
-Next, we build a list containing the codes or values from each field that are to be filtered out.  We then loop through this list and remove the observations that match the filtered values in each field (using the custom **trimByField()** function).  
+Next, we build a list containing the codes or values from each field that are to be filtered out. We then loop through this list and remove the observations that match the filtered values in each field (using the custom **trimByField()** function).
 
-```{r eval=FALSE}  
-
-
+``` r
   # Create a list of factors to eliminate  
   trim.list <- list(SaleReason=2:19,  
                     SaleInstrument=c(0, 1, 4:28),
@@ -821,13 +705,11 @@ Next, we build a list containing the codes or values from each field that are to
                               x.field=names(trim.list)[tL],
                               trim.list = unlist(trim.list[tL]))
   }
-
 ```
 
-Finally, we remove all of the unnecessary fields and rename the sale price field. 
+Finally, we remove all of the unnecessary fields and rename the sale price field.
 
-```{r eval=FALSE}  
-
+``` r
   # Transform:  Limit field names
   sales.data <- dplyr::select(.data=sales.data, pinx, rec.ID, sale.ID, SalePrice, 
                               sales.date, sales.year, month, qtr)
@@ -835,41 +717,35 @@ Finally, we remove all of the unnecessary fields and rename the sale price field
   
   # Rename Sales Price field
   sales.data <- dplyr::rename(.data=sales.data, sale.price=SalePrice)
-
 ```
 
 #### Prepare Parcel and Res Bldg Data
 
-We now turn to preparing the parcel and residential building tabular data. 
+We now turn to preparing the parcel and residential building tabular data.
 
 We begin by loading the parcel data from the database and then creating an identifier that will match with the sales and the geographic data, **pinx**.
 
-```{r eval=FALSE}  
-
+``` r
   # Load Parcel Data
   parcel.data <- dbReadTable(db.conn, 'parcel')
   
   # Create Pinx Field
   parcel.data <- buildPinx(parcel.data)
-  
 ```
 
-We then do the same with the residential building data. 
+We then do the same with the residential building data.
 
-```{r eval=FALSE}  
-
+``` r
   # Load Res Building data
   resbldg.data <- dbReadTable(db.conn, 'resbldg')
   
   # Create Pinx Field
   resbldg.data <- buildPinx(resbldg.data)
-  
 ```
 
-Next, we merge (integrate) the record type (property type) from the residential building data to the sales data.  We then convert this to a binary indicator, 1 if a residential sale, 0 if not. 
+Next, we merge (integrate) the record type (property type) from the residential building data to the sales data. We then convert this to a binary indicator, 1 if a residential sale, 0 if not.
 
-```{r eval=FALSE}  
-  
+``` r
   # Integrate the record type (Whether or not Residential) (Labeling)
   sales.data$res.record <- resbldg.data$BldgNbr[match(sales.data$pinx,
                                                       resbldg.data$pinx)]
@@ -878,35 +754,29 @@ Next, we merge (integrate) the record type (property type) from the residential 
   sales.data$res.record <- ifelse(is.na(sales.data$res.record), 
                                   0, 
                                   sales.data$res.record)
+```
 
-```  
+We then remove all sales that are not residential and then remove the binary field just created.
 
-We then remove all sales that are not residential and then remove the binary field just created. 
-
-```{r eval=FALSE}  
-  
+``` r
   # Filter those with non-residential record type or with more than one dwelling on it  
   sales.data <- dplyr::filter(.data=sales.data,
                               res.record == 1)
   
   # Mutate:  Remove Res.record field
   sales.data <- dplyr::mutate(.data=sales.data, res.record = NULL)
-  
 ```
 
-The specific property use is then merged to the sale data from the parcel data file.  
+The specific property use is then merged to the sale data from the parcel data file.
 
-```{r eval=FALSE}  
-
+``` r
   sales.data$present.use <- parcel.data$PresentUse[match(sales.data$pinx,
                                                    parcel.data$pinx)]
-
 ```
 
-We remove all sales that have no present use code and those that are not detached single family (2) or townhouse (29). 
+We remove all sales that have no present use code and those that are not detached single family (2) or townhouse (29).
 
-```{r eval=FALSE}  
-
+``` r
   # Filter those with no present use
   sales.data <- dplyr::filter(.data=sales.data,
                               !is.na(present.use))
@@ -914,13 +784,11 @@ We remove all sales that have no present use code and those that are not detache
   # Filter those not with SFR or Townhome use category
   sales.data <- dplyr::filter(.data=sales.data,
                               present.use == 2 | present.use == 29)
-
-```  
+```
 
 We start by limiting the parcel data to only those fields which we need and then renaming the fields.
 
-```{r eval=FALSE}  
-
+``` r
   # Transform:  Remove unneccessary fields
   parcel.data <- parcel.data[,c('pinx', 'CurrentZoning', 'SqFtLot', 
                                 'Topography', 'RestrictiveSzShape', 
@@ -938,13 +806,11 @@ We start by limiting the parcel data to only those fields which we need and then
                           'view.lkwash', 'view.lksamm', 'view.smwater',
                           'view.other', 'wfnt', 'wfnt.ftg', 'wfnt.bank',
                           'traffic.noise')
-  
 ```
 
 We then do the same for the residential building data
 
-```{r eval=FALSE}  
-
+``` r
   # Transform: Remove unnecessary fields 
   resbldg.data <- resbldg.data[,c('pinx', 'NbrLivingUnits', 'BldgNbr', 
                                   'Stories', 'BldgGrade', 'SqFtTotLiving',
@@ -961,15 +827,13 @@ We then do the same for the residential building data
                            'gar.bsmt.sf', 'gar.att.sf', 'deck.sf',
                            'beds', 'bath.half', 'bath.75', 'bath.full',
                            'yr.built', 'yr.ren', 'condition')
-
 ```
 
 Next, we perform a number of preparation exercises on the residential building data.
 
 First, we sort the data by the individual building number, remove any properties with more than one building and then remove any remains observations that do not indicate the primary building (data error). We finish by removing the buildling number field.
 
-```{r eval=FALSE}  
-
+``` r
   # Sort by building number
   resbldg.data <- dplyr::arrange(.data=resbldg.data,
                                 bldg.nbr)
@@ -985,13 +849,11 @@ First, we sort the data by the individual building number, remove any properties
   # Remove building number field
   resbldg.data <- dplyr::mutate(.data=resbldg.data,
                                  bldg.nbr = NULL)
-
 ```
 
-Next, we create a new field the totals up the three bathrooms fields. We then remove the partial bath fields. 
+Next, we create a new field the totals up the three bathrooms fields. We then remove the partial bath fields.
 
-```{r eval=FALSE}  
-
+``` r
   # Create total baths
   resbldg.data <- dplyr::mutate(.data=resbldg.data,
                                 baths = bath.full + bath.75 * .75 + bath.half * .5)
@@ -1003,39 +865,33 @@ Next, we create a new field the totals up the three bathrooms fields. We then re
                                 bath.75 = NULL)
   resbldg.data <- dplyr::mutate(.data=resbldg.data,
                                 bath.half = NULL)
-  
 ```
 
-#### Integrate Sales with Parcel and ResBldg data   
-  
-First we join the parcel data to the sales data based on the pinx field.  
+#### Integrate Sales with Parcel and ResBldg data
 
-```{r eval=FALSE}  
+First we join the parcel data to the sales data based on the pinx field.
 
+``` r
   # Join parcel data to sales (inner join)
   sales.data <- dplyr::inner_join(x=sales.data, 
                                   y=parcel.data, 
                                   by='pinx')
-
 ```
 
-Then we join the residential building data to the sales data based on the pinx field.  
+Then we join the residential building data to the sales data based on the pinx field.
 
-```{r eval=FALSE}  
-
+``` r
   # Join res bldg data to sales (inner join)
   sales.data <- dplyr::inner_join(x=sales.data, 
                                   y=resbldg.data, 
                                   by='pinx')
-
 ```
 
 After the integration we continue with transformation and filtering.
 
-First we create a home age variable by subtracting the year built from the sale year.  We then filter out all homes built after the year of sale (land sales) and then remove the year built field. 
+First we create a home age variable by subtracting the year built from the sale year. We then filter out all homes built after the year of sale (land sales) and then remove the year built field.
 
-```{r eval=FALSE}  
-
+``` r
   # Mutate: Create Age variable
   sales.data <- dplyr::mutate(.data=sales.data,
                               age=sales.year - yr.built)
@@ -1047,13 +903,11 @@ First we create a home age variable by subtracting the year built from the sale 
   # Remove Yr.Built field
   sales.data <- dplyr::mutate(.data=sales.data,
                               yr.built=NULL)
-
 ```
 
-Similarly, we create a renovated age field by subtracting the year of renovation from the year of sale and remove any sale with a major renovation after the sale date. 
-    
-```{r eval=FALSE}  
-    
+Similarly, we create a renovated age field by subtracting the year of renovation from the year of sale and remove any sale with a major renovation after the sale date.
+
+``` r
   # Create years since renovation
   sales.data <- dplyr::mutate(.data=sales.data,
                               age.renov = sales.year - yr.ren)
@@ -1061,13 +915,11 @@ Similarly, we create a renovated age field by subtracting the year of renovation
   # Filter: Remove those renovated after the sale
   sales.data <- dplyr::filter(.data=sales.data,
                               age.renov >= 0)
-
 ```
 
-We then take the lesser of two, the regular age and the renovated age to create the effective age of the dwelling. After doing this we remove the now unnecessary renovated age and renovation year field. 
+We then take the lesser of two, the regular age and the renovated age to create the effective age of the dwelling. After doing this we remove the now unnecessary renovated age and renovation year field.
 
-```{r eval=FALSE}  
-
+``` r
   # Mutate: Create effective age field
   sales.data$eff.age <- ifelse(sales.data$age.renov < sales.data$age,
                                sales.data$age.renov,
@@ -1081,13 +933,11 @@ We then take the lesser of two, the regular age and the renovated age to create 
   # Remove Yr.Ren field
   sales.data <- dplyr::mutate(.data=sales.data,
                               yr.ren=NULL)
-  
 ```
 
-Finally, we filter out all sales with more than one living unit (duplexes, triplexes, etc.) and then remove the field giving the count of living units. 
+Finally, we filter out all sales with more than one living unit (duplexes, triplexes, etc.) and then remove the field giving the count of living units.
 
-```{r eval=FALSE}  
-
+``` r
   # Filter: Remove those with more than one land use
   sales.data <- dplyr::filter(.data=sales.data,
                               nbr.lu == 1)
@@ -1095,63 +945,51 @@ Finally, we filter out all sales with more than one living unit (duplexes, tripl
   # Remove Nbr.lu field
   sales.data <- dplyr::mutate(.data=sales.data,
                               nbr.lu=NULL)
+```
 
-```  
-
-### Integrate Sales and Geospatial Data  
+### Integrate Sales and Geospatial Data
 
 Before integration, we perform a few basic transformation and filtering steps on the geospatial data.
 
 We start by loading the parcel centroids object we created in the manage step.
 
-```{r eval=FALSE}  
-
+``` r
   load(file= file.path(data.dir, 'geographic/parcelcentroids.Rdata'))
-
 ```
 
-We then create a **pinx** field to join with the sales data. After doing so we remove the unnecessary **PIN** field. 
+We then create a **pinx** field to join with the sales data. After doing so we remove the unnecessary **PIN** field.
 
-```{r eval=FALSE}  
-
+``` r
   # Mutate:  Add pinx field for joining
   parcel.centroids$pinx <- paste0('..', parcel.centroids$PIN)
   
   # Remove unnecessary fields
   parcel.centroids$PIN <- NULL
-
 ```
 
 Next, we filter the parcel centroid file to include only those parcels that match with a sale.
 
-```{r eval=FALSE}  
-
+``` r
   parcel.centroids <- dplyr::filter(parcel.centroids, pinx %in% sales.data$pinx)
-
 ```
 
-Now we prepare the police beat data.  
+Now we prepare the police beat data.
 
 First we load the workspace with the three different police beat objects.
 
-```{r eval=FALSE}  
-
+``` r
   load(file=file.path(data.dir, 'geographic/beats.Rdata'))
-
 ```
 
 To begin, we filter out all beats areas that do not have a precinct ID (water areas)
 
-```{r eval=FALSE}  
-
+``` r
   beats <- dplyr::filter(beats, first_prec != '')
-
 ```
 
-Next, we calculate the areal extent (in square miles) of each beat area.  We do this by extracting a list of the polygon objects, calculating the raw area for each and then converting it to square miles (approx.)
+Next, we calculate the areal extent (in square miles) of each beat area. We do this by extracting a list of the polygon objects, calculating the raw area for each and then converting it to square miles (approx.)
 
-```{r eval=FALSE}  
-
+``` r
   # Extract polygon objects
   beat.polys <- beats.sp@polygons
   
@@ -1160,48 +998,38 @@ Next, we calculate the areal extent (in square miles) of each beat area.  We do 
   
   # Convert to square miles
   poly.area <- poly.area * (68.99 ^ 2)
-
-```  
-  
-We then add these areal measurements to the beats sp object.  
-  
-```{r eval=FALSE}  
-
-  beats.sp@data$size <- poly.area
-
-```  
-
-Then we write the three beat objects back to an R workspace for future analysis.
-  
-```{r eval=FALSE}  
-
-  save(beats, beats.sp, beats.spf, 
-       file= file.path(data.dir, 'geographic/beats.Rdata'))
-
 ```
 
-Now we integrate the beat and centroid data to the sales.  
+We then add these areal measurements to the beats sp object.
 
-We start by integrating the beat and the parcel data.  We do this by joining the beat code to the parcel centroid data. First we set the parcel centroid beat to 'NONE'.  
+``` r
+  beats.sp@data$size <- poly.area
+```
 
-```{r eval=FALSE}  
-  
+Then we write the three beat objects back to an R workspace for future analysis.
+
+``` r
+  save(beats, beats.sp, beats.spf, 
+       file= file.path(data.dir, 'geographic/beats.Rdata'))
+```
+
+Now we integrate the beat and centroid data to the sales.
+
+We start by integrating the beat and the parcel data. We do this by joining the beat code to the parcel centroid data. First we set the parcel centroid beat to 'NONE'.
+
+``` r
   parcel.centroids$beat <- 'NONE'
-
 ```
 
 Then we run an intersect (overlay or spatial join) operation that assigns parcel centroid references to each beat.
 
-```{r eval=FALSE}  
-
+``` r
   beats.overlay <- st_intersects(beats, parcel.centroids)
-
 ```
 
-Next, we loop through each beat and assign the beat code to the parcels that fall within that beat. 
+Next, we loop through each beat and assign the beat code to the parcels that fall within that beat.
 
-```{r eval=FALSE}  
-  
+``` r
   # Loop through each beat
   for (i in 1:length(beats.overlay)){
     
@@ -1212,50 +1040,40 @@ Next, we loop through each beat and assign the beat code to the parcels that fal
     parcel.centroids$beat[ov.id] <- as.character(beats$beat[i])
 
   }
-
 ```
 
 Finally, we remove the parcel centroids that are not within one of the beats (not within the City of Seattle).
 
-```{r eval=FALSE}  
-
+``` r
   parcel.centroids <- dplyr::filter(parcel.centroids, beat != "NONE")
-
 ```
 
-Next we extract the latitude and longitude values from the jointly held lat/long field in the parcel centroid data and add them to their own separate fields.  
+Next we extract the latitude and longitude values from the jointly held lat/long field in the parcel centroid data and add them to their own separate fields.
 
-```{r eval=FALSE}  
-
+``` r
   # Transform: Create Separate Lat/long Columns 
   parcel.centroids$longitude <- unlist(lapply(parcel.centroids$parcel.centroids, function(x) x[1]))
   parcel.centroids$latitude <- unlist(lapply(parcel.centroids$parcel.centroids, function(x) x[2]))
-
-```  
-    
-We then save the parcel centroid data to a new R workspace for future use. 
-
-```{r eval=FALSE}  
-
-  save(parcel.centroids, 
-       file= file.path(data.dir, 'geographic/parcelcentroids_sales.Rdata'))
-
 ```
 
-Now we integrate (join) the sales data and the parcel centroid data by the **pinx**.  We do an inner join here so that only those observations with **pinx** in both the sales and the parcel centroids are retained. 
+We then save the parcel centroid data to a new R workspace for future use.
 
-```{r eval=FALSE}  
+``` r
+  save(parcel.centroids, 
+       file= file.path(data.dir, 'geographic/parcelcentroids_sales.Rdata'))
+```
 
+Now we integrate (join) the sales data and the parcel centroid data by the **pinx**. We do an inner join here so that only those observations with **pinx** in both the sales and the parcel centroids are retained.
+
+``` r
   sales.data <- merge(sales.data, 
                       parcel.centroids[ , c('pinx', 'beat', 'longitude', 'latitude')],
                       by='pinx')
-
 ```
 
-Now that we have limited the sales to the City of Seattle only, we re-classify the sales data zoning variables into five simple classes. 
+Now that we have limited the sales to the City of Seattle only, we re-classify the sales data zoning variables into five simple classes.
 
-```{r eval=FALSE}  
-
+``` r
   sales.data$zoning[grep('LR1', sales.data$zoning)] <- 'LR1'
   sales.data$zoning[grep('LR2', sales.data$zoning)] <- 'LR2'
   sales.data$zoning[grep('LR3', sales.data$zoning)] <- 'LR3'
@@ -1264,38 +1082,32 @@ Now that we have limited the sales to the City of Seattle only, we re-classify t
   sales.data$zoning[grep('MR', sales.data$zoning)] <- 'Other'
   sales.data$zoning[grep('RSL', sales.data$zoning)] <- 'Other'
   sales.data$zoning[grep('NR', sales.data$zoning)] <- 'Other'
-
 ```
 
 #### Prepare Crime Data
 
 We begin by reading in the crime data from the database.
 
-```{r eval=FALSE}  
-
+``` r
   crime.data <- dbReadTable(db.conn, 'Crime')
-
 ```
 
-Next, we fix the formatting on the date and time field.  
+Next, we fix the formatting on the date and time field.
 
 First, we extract just the date values and convert to the R date format.
 
-```{r eval=FALSE}  
-
+``` r
  ## Transform date and time fields  
   
   # Extract date only from time/date field
   crime.data <- dplyr::mutate(.data=crime.data,
                               crime.date = as.Date(substr(
                                 occurred.date.or.date.range.start, 1, 10), '%m/%d/%Y'))
-
 ```
 
 We then extract the time of the reported crime and convert to a 24 hour format.
 
-```{r eval=FALSE}  
-                              
+``` r
   # Extract time from time+date field                           
   crime.data <- dplyr::mutate(.data=crime.data,
                               crime.time = substr(
@@ -1315,21 +1127,17 @@ We then extract the time of the reported crime and convert to a 24 hour format.
   crime.data$crime.time <- ifelse(crime.data$crime.time >=24, 
                             crime.data$crime.time - 24, 
                             crime.data$crime.time)
-  
 ```
 
 We then convert the crime date field to the R date format.
 
-```{r eval=FALSE}  
-
+``` r
   crime.data$crime.date <- as.Date(crime.data$crime.date)
-
 ```
 
-Next, we re-classify the crime types from the 29 large categories into four: violent, property, behavior and traffic.  All smaller categories are considered other.  
+Next, we re-classify the crime types from the 29 large categories into four: violent, property, behavior and traffic. All smaller categories are considered other.
 
-```{r eval=FALSE}  
-
+``` r
   # Create Crime Groups
   violent <- c('ASSAULT', 'HOMICIDE', 'ROBBERY', 'WEAPON')
   property <- c('BIKE THEFT', 'BURGLARY', 'CAR PROWL', 'ILLEGAL DUMPING', 'MAIL THEFT',
@@ -1350,55 +1158,45 @@ Next, we re-classify the crime types from the 29 large categories into four: vio
                           behavior] <- 'behavior'
   crime.data$crime.type[crime.data$summarized.offense.description %in% 
                           traffic] <- 'traffic'
- 
 ```
 
 #### Integrate Crime and Sales Data
 
-Next, we integrate the crime and sales data. 
+Next, we integrate the crime and sales data.
 
 We start by limiting the crime date to reported incidents in 2015 or later.
 
-```{r eval=FALSE}  
-
+``` r
   crime.data <- crime.data[crime.data$year >= 2015, ]
-
 ```
 
-Then we take each sale, count the number of reported crime (and of what type) that occurred within 400 meters of the property and happened in the year prior to the sale of the property.  This is a multiple step operation and can be quite slow on machines with limited computing power.  
+Then we take each sale, count the number of reported crime (and of what type) that occurred within 400 meters of the property and happened in the year prior to the sale of the property. This is a multiple step operation and can be quite slow on machines with limited computing power.
 
 We start by setting the distance threshold to 400 meters.
 
-```{r eval=FALSE}  
-
+``` r
   dist.thres <- 400
-
 ```
 
 Then we set the value of nearby crime counts for all sales to 0 for each crime type.
 
-```{r eval=FALSE}  
-
+``` r
   sales.data$crime.violent <- 0
   sales.data$crime.property <- 0
   sales.data$crime.traffic <- 0
   sales.data$crime.behavior <- 0
   sales.data$crime.other <- 0
-
 ```
 
 Next we start a loop through each sale
 
-```{r eval=FALSE}  
-
+``` r
   for (j in 1:nrow(sales.data)){
-
 ```
 
 We extract the individual sale, calculate the difference in days between each crime incident and limit to the crime within the one year prior window.
 
-```{r eval=FALSE}  
-
+``` r
     # Extract sales data
     j.data <- sales.data[j,]
     
@@ -1407,50 +1205,41 @@ We extract the individual sale, calculate the difference in days between each cr
     
     # Limit crime data to time window
     c.data <- crime.data[x.days > 0 & x.days < 365, ]
-
 ```
 
 We then calculate the distance between all of these crimes and the sale and then limit to those within the threshold (400m or 1/4 mile)
 
-```{r eval=FALSE}  
-
+``` r
     # Calculate distances
     j.dist <- distHaversine(j.data[,c('longitude', 'latitude')],
                             c.data[,c('longitude', 'latitude')])
 
     # Limit data to those within threshold
     cx.data <- c.data[j.dist < dist.thres, ]
-
 ```
 
 We then add a count of each crime type to the sale observation
 
-```{r eval=FALSE}  
-
+``` r
     sales.data$crime.violent[j] <- length(which(cx.data$crime.type == 'violent'))
     sales.data$crime.property[j] <- length(which(cx.data$crime.type == 'property'))
     sales.data$crime.behavior[j] <- length(which(cx.data$crime.type == 'behavior'))
     sales.data$crime.traffic[j] <- length(which(cx.data$crime.type == 'traffic'))
     sales.data$crime.other[j] <- length(which(cx.data$crime.type == 'other'))
-
 ```
 
 After every 100 sales complete we output the progress (this could be removed from code it will not impact performance)
 
-```{r eval=FALSE}  
-
+``` r
     if (j %% 100 == 0){
       cat('record number ', j, '\n')
     }
-
 ```
 
 We close the loop
 
-```{r eval=FALSE}  
-
+``` r
   }
-
 ```
 
 #### Prepare Sentiment Tweets
@@ -1459,68 +1248,54 @@ We now prepare the sentiment tweet data
 
 First we load in from the database
 
-```{r eval=FALSE} 
- 
+``` r
   tweet.data <- dbReadTable(db.conn, 'SentimentTweets')
-
 ```
 
 Next, we limit the tweet to those within City of Seattle
 
 First we create a boundary file for the City of Seattle by dissolving (or unary unioning) the police beats.
 
-```{r eval=FALSE}  
-
+``` r
   seattle.bound <- gUnaryUnion(beats.sp)
-
 ```
 
 We then convert the tweets to a SpatialPointsDataFrame, with the correct coordinate reference system.
 
-```{r eval=FALSE}  
-
+``` r
   tweet.sp <- SpatialPointsDataFrame(cbind(tweet.data$longitude, tweet.data$latitude),
                                      data=tweet.data)
   proj4string(tweet.sp) <- CRS(proj4string(beats.sp))
-
 ```
 
-Next, we intersect the two in order to determine which tweets fall within the city of Seattle.  We then limit the data to those tweets within Seattle city limits. 
+Next, we intersect the two in order to determine which tweets fall within the city of Seattle. We then limit the data to those tweets within Seattle city limits.
 
-```{r eval=FALSE}  
-
+``` r
   # Clip by city boundary
   in.seattle <- gIntersects(tweet.sp, seattle.bound, byid=T)
   
   # Filter to those in city
   tweet.sp <- tweet.sp[which(in.seattle), ]
-
 ```
 
-The sentiment score are integer values ranging from -5 to 5, based on their sentiment.  For the purposes of judging local sentiment we will only consider positive and negative sentiment, thus we must filter and transform the data.
+The sentiment score are integer values ranging from -5 to 5, based on their sentiment. For the purposes of judging local sentiment we will only consider positive and negative sentiment, thus we must filter and transform the data.
 
 We start by removing all neutral tweet (sentiment of 0) from the data.
 
-```{r eval=FALSE}  
-
+``` r
   twsent.sp <- tweet.sp[tweet.sp@data$SentimentScore != 0, ]
-
 ```
 
 Then we convert all tweet to simply negative (-1) or positive (1)
 
-```{r eval=FALSE}  
-
+``` r
   twsent.sp@data$SS <- ifelse(twsent.sp@data$SentimentScore < 0, -1, 1)
-
 ```
 
 Finally, we extract just the data portion of the tweet sp object.
 
-```{r eval=FALSE}  
-
+``` r
   twsent <- twsent.sp@data
-
 ```
 
 ### Write Data Back to Database
@@ -1529,8 +1304,7 @@ Finally, we write the non-spatial data back to the data base.
 
 First we convert the date fields in the sales and crime date back to simple character strings for storage purposes
 
-```{r eval=FALSE}  
-
+``` r
   # Convert sales.date to character to write to database
   sales.data <- dplyr::mutate(.data=sales.data,
                               sales.date = as.character(sales.date))  
@@ -1538,21 +1312,17 @@ First we convert the date fields in the sales and crime date back to simple char
   # Convert sales.date to character to write to database
   crime.data <- dplyr::mutate(.data=crime.data,
                               crime.date = as.character(crime.date))  
-
 ```
 
 Then we write the sales data to the database as **prepSales** or prepared sales.
 
-```{r eval=FALSE}  
-
+``` r
   dbWriteTable(db.conn, 'prepSales', sales.data, row.names=FALSE, overwrite=TRUE)
-
 ```
 
 Next, we write the crime data, overwriting the previous data.
 
-```{r eval=FALSE}  
-
+``` r
   # Check if exists, if so overwrite
   if (dbExistsTable(db.conn, 'Crime')){
     dbRemoveTable(db.conn, 'Crime')
@@ -1560,13 +1330,11 @@ Next, we write the crime data, overwriting the previous data.
   
   # Write to Database
   dbWriteTable(db.conn, 'Crime', crime.data, row.names=FALSE)
-
 ```
 
 And, finally, we write the tweet sentiment data, again overwriting the previous data
 
-```{r eval=FALSE}  
-
+``` r
   # Check if exists, if so overwrite
   if (dbExistsTable(db.conn, 'SentimentTweets')){
     dbRemoveTable(db.conn, 'SentimentTweets')
@@ -1574,20 +1342,18 @@ And, finally, we write the tweet sentiment data, again overwriting the previous 
 
   # Write to database
   dbWriteTable(db.conn, 'SentimentTweets', twsent, row.names=FALSE)
-
 ```
 
 We complete the preparation phase by closing the connection to the database.
 
-```{r eval=FALSE}  
-    
+``` r
   dbDisconnect(db.conn)
-  
 ```
 
-## Chapters 8 and 9
+Chapters 8 and 9
+----------------
 
-Chapters 8 and 9 cover the exploration and data cleaning steps.  As these stages are highly iterative, and often rely on similar techniques and methods, we will cover them jointly in the code.  
+Chapters 8 and 9 cover the exploration and data cleaning steps. As these stages are highly iterative, and often rely on similar techniques and methods, we will cover them jointly in the code.
 
 #### Preliminary commands
 
@@ -1595,44 +1361,36 @@ As usual, we begin with a set of preliminary commands.
 
 First we load the necessary libraries
 
-```{r eval=FALSE}  
-
+``` r
   library(sf)
   library(sp)
   library(tidyverse)
   library(RSQLite)
   library(RODBC)
   library(GGally)
-
 ```
 
 Then we set the paths to the code and the data
 
-```{r eval=FALSE}  
-
+``` r
   data.dir <- 'c:/temp/'                      # For Example
   code.dir <- 'c:/code/research/REAIA_book/'  # For Example
-
 ```
 
 We load the custom functions
 
-```{r eval=FALSE}  
-
+``` r
   source(paste0(code.dir, 'custom_functions.R'))  
-
 ```
 
 And then we set the name of the database and establish a connection to it.
 
-```{r eval=FALSE}  
-
+``` r
   # Set database location
   data.db <- file.path(data.dir, 'seattleCaseStudy.db')
 
   # Establish connection
   db.conn <- dbConnect(dbDriver('SQLite'), data.db)
-
 ```
 
 #### Load Data
@@ -1641,34 +1399,26 @@ We begin by loading the data.
 
 First we load the sales data from the database.
 
-```{r eval=FALSE}  
-
+``` r
   sales.data <- dbReadTable(db.conn, 'prepSales')
-
 ```
 
 Then we load in the three spatial representations of the Seattle Police Beat data from the saved R workspace.
 
-```{r eval=FALSE}  
-
+``` r
   load(file=file.path(data.dir, 'geographic/beats.Rdata'))
-
 ```
 
 We then convert the sales dates back into R format
 
-```{r eval=FALSE}  
-
+``` r
   sales.data <- dplyr::mutate(.data=sales.data,
                                sales.date=as.Date(sales.date))
-
 ```
-  
+
 Finally, we ensure that the categorial variables are represented as such.
 
-```{r eval=FALSE}  
-
-  
+``` r
   # Identify Categorical Varialbes
   cat.vars <- c('present.use', 'zoning', 'topo', 'restr.szshp',
                 'view.rainier', 'view.olympics', 'view.cascades',
@@ -1678,25 +1428,21 @@ Finally, we ensure that the categorial variables are represented as such.
   
   # Ensure they are represented as factors (categorical).
   for(cv in cat.vars) sales.data[, cv] <- as.factor(sales.data[, cv])
-
 ```
 
-#### Univariate Exploration 
+#### Univariate Exploration
 
 We start with exploring the univariate properties of the sales data.
 
 First, we get a list of the field types
 
-```{r eval=FALSE}  
-
+``` r
   field.types <- unlist(lapply(sales.data, class))
-
 ```
 
-For all fields that are numeric or integers, we build a summary statistics table using the **fullSummary** custom function.  We then print this to the screen for review. 
+For all fields that are numeric or integers, we build a summary statistics table using the **fullSummary** custom function. We then print this to the screen for review.
 
-```{r eval=FALSE}  
-
+``` r
   # Compute summary table for numeric and integer variables
   summ.table <- t(do.call(cbind, 
                         lapply(sales.data[,field.types == 'numeric' |
@@ -1705,64 +1451,53 @@ For all fields that are numeric or integers, we build a summary statistics table
   
   # Show the table
   summ.table
-
 ```
 
-Next, we compute a set of summary statistic for the factor (categorical) variables. 
+Next, we compute a set of summary statistic for the factor (categorical) variables.
 
-```{r eval=FALSE}  
-
+``` r
   summary(sales.data[, field.types == 'factor'])
-
 ```
 
 Given the summary statistics, we now filter out a number of observations that appear to be errors of value or mislabeled transactions that were not eliminated earlier.
 
 First we look at the lowest sales prices and remove all of those under $50,000
 
-```{r eval=FALSE}  
-
+``` r
   # Examine lowest prices
   head(sales.data$sale.price[order(sales.data$sale.price)], 300)
   
   # Filter out those below $50,000 
   sales.data <- dplyr::filter(sales.data, sale.price >= 50000)
-
 ```
 
 Next we look at home sizes and remove those under 300 square feet in size.
 
-```{r eval=FALSE}  
-
+``` r
   # Examine lowest home sizes
   head(sales.data$tot.sf[order(sales.data$tot.sf)], 300)
   
   # Filter those below 300
   sales.data <- dplyr::filter(sales.data, tot.sf >= 300)
-
 ```
 
 And then we remove those homes with more than 10 bedrooms.
-  
-```{r eval=FALSE}  
-  
+
+``` r
   # Examine lowest number of bedrooms
   tail(sales.data$beds[order(sales.data$beds)], 300)
 
   # Filter those greater htan 10
   sales.data <- dplyr::filter(sales.data, beds <= 10)
-  
 ```
 
-  
 #### Univariate Visual/Informal Exploration
 
-We now make visual explanation of most of the numeric fields.  For continuous variables we use density plots and for the categorical or ordinal we use bar plots. 
+We now make visual explanation of most of the numeric fields. For continuous variables we use density plots and for the categorical or ordinal we use bar plots.
 
-We start with the continuous variables. 
+We start with the continuous variables.
 
-```{r eval=FALSE}  
-
+``` r
   # Sale Price
   sp.dens <- ggplot(sales.data,
          aes(x=sale.price)) +
@@ -1897,21 +1632,17 @@ We start with the continuous variables.
     ggtitle('Bathrooms') + 
     theme(plot.title = element_text(hjust = 0.5),
           axis.text.y=element_blank())
+```
 
-```  
+We then plot the density plots for the continuous variables.
 
-We then plot the density plots for the continuous variables. 
-
-```{r eval=FALSE}  
-
+``` r
   ggMultiPlots(st.hist, bd.hist, bt.hist, cols=3)
-
-```  
+```
 
 Next we build the bar plots for the categorical and ordinal variables.
 
-```{r eval=FALSE}  
-
+``` r
   # Present Use
   pu.hist <- ggplot(sales.data,
                     aes(x=present.use)) +
@@ -2111,13 +1842,11 @@ Next we build the bar plots for the categorical and ordinal variables.
     ggtitle('Police Beat') + 
     theme(plot.title = element_text(hjust = 0.5),
           axis.text.y=element_blank())
-  
 ```
 
-And then plot them. 
-  
-```{r eval=FALSE}  
-  
+And then plot them.
+
+``` r
   # Make Plots 1
   ggMultiPlots(pu.hist, zo.hist, tp.hist,
                rs.hist, vr.hist, vo.hist,
@@ -2130,54 +1859,44 @@ And then plot them.
                wb.hist, tn.hist, bg.hist,
                bc.hist, pb.hist, 
                cols=3)
-
 ```
 
-From the exploration above, we make a number transformations to the data.  
+From the exploration above, we make a number transformations to the data.
 
 First we eliminate the 'View of Lake Sammamish' variable as no observations have this.
 
-```{r eval=FALSE}  
-
+``` r
   sales.data$view.lksamm <- NULL
-
 ```
 
 And then we convert the waterfront variable from an ordinal to a binary due to the small number of categories in the ordinal variable.
 
-```{r eval=FALSE}  
-
+``` r
   sales.data$is.waterfront <- ifelse(sales.data$wfnt != 0, 1, 0)
-
 ```
 
 Finally, we convert the beds, baths and building quality variables to numeric (from categorical) due to their large number of levels.
 
-```{r eval=FALSE}  
-
+``` r
   sales.data$beds <- as.numeric(as.character(sales.data$beds))
   sales.data$baths <- as.numeric(as.character(sales.data$baths))
   sales.data$bldg.grade <- as.numeric(as.character(sales.data$bldg.grade))
-
 ```
 
-#### Multivariate Exploration 
+#### Multivariate Exploration
 
 Next, we turn to multivariate exploration.
 
 We start by building a scatter plot matrix involving some of the most important variables in the sales data.
 
-```{r eval=FALSE}  
-
+``` r
   ggcorr(sales.data[,c('sale.price', 'tot.sf', 'lot.size','beds', 'baths',
                        'age', 'bldg.grade')], label=TRUE)
-
 ```
 
-To get a better look at the bivariate relationship between the independent variables and sales price (dependent) we create individual scatterplots. 
+To get a better look at the bivariate relationship between the independent variables and sales price (dependent) we create individual scatterplots.
 
-```{r eval=FALSE}  
-  
+``` r
   # Home Size and Sale Price
   ggplot(sales.data,
          aes(x=tot.sf, y=sale.price))+
@@ -2206,13 +1925,11 @@ To get a better look at the bivariate relationship between the independent varia
     scale_y_log10() +
     scale_x_log10() +
     stat_smooth()
-
 ```
 
 And for the categorical and ordinal variables, we create boxplots
 
-```{r eval=FALSE}  
-    
+``` r
   # Present Use and Sale Price
   ggplot(sales.data,
          aes(x=present.use, y=sale.price))+
@@ -2260,7 +1977,6 @@ And for the categorical and ordinal variables, we create boxplots
          aes(x=as.factor(beds), y=sale.price))+
     geom_boxplot() +  
     scale_y_log10()
-
 ```
 
 #### Transform View Variables
@@ -2269,17 +1985,14 @@ From the above exploration we find that the view variables need some recategoriz
 
 We start by creating a matrix of whether or not each observation has a particular view.
 
-```{r eval=FALSE}  
-
+``` r
   has.view <- as.data.frame(lapply(sales.data[,14:22], 
                              function(x) ifelse(as.numeric(x) == 1, 0, 1)))
-
 ```
 
-Next, for each observation we record which view offers the maximum value (best rated view).  This requires us to build a custom function to scan each observation and then return the column number of the best view rating.
+Next, for each observation we record which view offers the maximum value (best rated view). This requires us to build a custom function to scan each observation and then return the column number of the best view rating.
 
-```{r eval=FALSE}  
-
+``` r
   # Small custom function to extract
   getX <- function(x){
     if(max(x) == 0){
@@ -2291,13 +2004,11 @@ Next, for each observation we record which view offers the maximum value (best r
   
   # Get maximum  view
   max.view <- apply(has.view, 1, getX)
-  
 ```
 
-We then create a vector containing the name of the best view.  First we set all values to no view, then we add the name of the view, if any, that has the maximum rating. Finally, we add this vector to the data under the **view.best** field.
+We then create a vector containing the name of the best view. First we set all values to no view, then we add the name of the view, if any, that has the maximum rating. Finally, we add this vector to the data under the **view.best** field.
 
-```{r eval=FALSE}  
-
+``` r
   # Set Null View Type
   view.type <- rep('no view', length(max.view))
   
@@ -2306,24 +2017,20 @@ We then create a vector containing the name of the best view.  First we set all 
   
   # Add to sales.data
   sales.data$view.best <- view.type
+```
 
-```  
-  
 We then plot prices against the various view types as a set of boxplots.
 
-```{r eval=FALSE}  
-
+``` r
   ggplot(sales.data,
          aes(x=view.best, y=sale.price))+
     geom_boxplot() +  
     scale_y_log10()
-
 ```
 
-We now make two more transformations to the view scores.  First we consolidate them into binary views based on whether there is a mountain, water or other view.
+We now make two more transformations to the view scores. First we consolidate them into binary views based on whether there is a mountain, water or other view.
 
-```{r eval=FALSE}  
-
+``` r
   # Create mountain view
   sales.data$view.mtn <- ifelse(sales.data$view.rainier != 0 |
                                   sales.data$view.olympics != 0 |
@@ -2341,30 +2048,26 @@ We now make two more transformations to the view scores.  First we consolidate t
                                     sales.data$view.terr != 0 |
                                     sales.data$view.other != 0,
                                   1, 0)
+```
 
-```  
-  
 We also total up all view scores across the nine categories to give a sum of views for each observations.
 
-```{r eval=FALSE}  
-  
+``` r
   # Create a matrix of view scores (as numeric)
   view.scores <- as.data.frame(lapply(sales.data[, 14:22], 
                                       function(x) as.numeric(as.character(x))))
 
   # Sum and add to the data
   sales.data$view.score <- rowSums(view.scores)
-
 ```
 
-#### Mapping 
+#### Mapping
 
 Next we map the independent variables.
 
-First we build a base map showing the location of the observations. 
+First we build a base map showing the location of the observations.
 
-```{r eval=FALSE}  
-
+``` r
   base.map <- ggplot(sales.data,
                      aes(x=longitude, 
                          y=latitude)) +
@@ -2374,13 +2077,11 @@ First we build a base map showing the location of the observations.
                                    aes(x=long, y=lat, group=id),
                                    color='gray20')
   base.map
-  
-```  
+```
 
 Then we plot the observations, colored by sale price.
-  
-```{r eval=FALSE}  
-  
+
+``` r
   price.map <- ggplot(sales.data,
                    aes(x=longitude,
                        y=latitude, 
@@ -2391,13 +2092,11 @@ Then we plot the observations, colored by sale price.
               aes(x=long, y=lat, group=id),
               color='gray20')
   price.map
-
 ```
 
 We then create point maps of the other variables.
 
-```{r eval=FALSE}  
-
+``` r
   # Property use (Detached or townhome)
   use.map <- ggplot(sales.data,
                      aes(x=longitude, 
@@ -2639,43 +2338,34 @@ We then create point maps of the other variables.
               aes(x=long, y=lat, group=id),
               color='gray20')
   garb.map  
-  
-```  
-  
+```
+
 #### Label Discordant Values
 
-Finally, based on the exploration above, we deal with the discordant values.  We take a 'label and test' approach, by labeling the discordant values in this step and then testing for their impact in the modeling step that follows.  
+Finally, based on the exploration above, we deal with the discordant values. We take a 'label and test' approach, by labeling the discordant values in this step and then testing for their impact in the modeling step that follows.
 
-We start by adding three new fields to the sales data:
-1. Discordant: Binary indicating discordant or not
-2. Disc.fields: Text field with all fields that are discordant
-3. Disc.type: Text field with the type of discordancy for each discordant field
+We start by adding three new fields to the sales data: 1. Discordant: Binary indicating discordant or not 2. Disc.fields: Text field with all fields that are discordant 3. Disc.type: Text field with the type of discordancy for each discordant field
 
 Each of these is set to 0 or blank to begin.
 
-```{r eval=FALSE}  
-
+``` r
   sales.data$discordant <- 0
   sales.data$disc.fields <- ""
   sales.data$disc.type <- ""
-
 ```
 
-First, we label all properties with a restrictive lot size or shape as discordant.  We do this because there are only a few of them and they are likely very unique properties not indicative of the broader market. 
+First, we label all properties with a restrictive lot size or shape as discordant. We do this because there are only a few of them and they are likely very unique properties not indicative of the broader market.
 
-```{r eval=FALSE}  
-
+``` r
   rss <- which(sales.data$restr.szshp != 0)
   sales.data$discordant[rss] <- 1
   sales.data$disc.fields[rss] <- paste0(sales.data$disc.fields[rss], 'restr.szshp | ')
   sales.data$disc.type[rss] <- paste0(sales.data$disc.type[rss], 'small category | ')
-
 ```
 
-Next, we apply a discordant label to a number of key fields based on their values.  Particularly, we label all values below the 1% quantile or above the 99% quantile as potentially discordant.  These are Univariate (UV) discordants.
+Next, we apply a discordant label to a number of key fields based on their values. Particularly, we label all values below the 1% quantile or above the 99% quantile as potentially discordant. These are Univariate (UV) discordants.
 
-```{r eval=FALSE}  
-    
+``` r
   # Sale Price
   spd <- which(sales.data$sale.price > quantile(sales.data$sale.price, .99) |
                  sales.data$sale.price < quantile(sales.data$sale.price, .01))
@@ -2723,51 +2413,41 @@ Next, we apply a discordant label to a number of key fields based on their value
   sales.data$discordant[tsd] <- 1
   sales.data$disc.fields[tsd] <- paste0(sales.data$disc.fields[tsd], 'baths | ')
   sales.data$disc.type[tsd] <- paste0(sales.data$disc.type[tsd], 'UV: 1% Quant | ')
-  
 ```
 
-Finally, we find the home size and price relationship to be one of the strongest relationships in the data.  From this relationship we label multivariate (MV) discordant values using a multiple step process. 
+Finally, we find the home size and price relationship to be one of the strongest relationships in the data. From this relationship we label multivariate (MV) discordant values using a multiple step process.
 
 We begin by extracting a data frame of just the sales price and home size
 
-```{r eval=FALSE}  
-
+``` r
   x.data <- sales.data[,c('sale.price', 'tot.sf')]
-
 ```
 
 We then estimate the Mahalanobis Distance for each point from their multivariate mean.
 
-```{r eval=FALSE}  
-
+``` r
   x.data$x.mah <- mahalanobis(x.data, colMeans(x.data), cov(x.data))
-  
 ```
 
 We convert the Mahalanobis Distances into quantile at 80%, 90%, 95%, 99% and 99.9% and add this quantile measure as a factor to the data
 
-```{r eval=FALSE}  
-
+``` r
   # Create cutoff points
   cuts <- quantile(x.data$x.mah, probs=c(0, .8, .9, .95, .99, .999, 1))
   
   # Add as a factor to the data
   x.data$mah.col <- as.numeric(as.factor(cut(x.data$x.mah, cuts)))
-
-```  
-
-We then add the original discordancy measure to the new data. 
-
-```{r eval=FALSE}  
-   
-  x.data$discordant <- sales.data$discordant
-  
 ```
- 
-Next, we make two plots.  The first plotting sale price against total square footage, with the univariate discordant values labeled.  The second shows the quantile value of each observation based on its mahalabonis distance from the above calculation
 
-```{r eval=FALSE}  
+We then add the original discordancy measure to the new data.
 
+``` r
+  x.data$discordant <- sales.data$discordant
+```
+
+Next, we make two plots. The first plotting sale price against total square footage, with the univariate discordant values labeled. The second shows the quantile value of each observation based on its mahalabonis distance from the above calculation
+
+``` r
   # Existing discordancy
   ex.disc <- ggplot(x.data, 
                     aes(x=tot.sf, y=sale.price, 
@@ -2786,50 +2466,43 @@ Next, we make two plots.  The first plotting sale price against total square foo
   
   # Plot to viewer
   ggMultiPlots(ex.disc, mv.disc, cols=2)
-
 ```
 
 Based on the multivariate analysis, we then label anything at the 99% or greater as multivariate discordant.
 
-```{r eval=FALSE}  
-
+``` r
   x.disc <- which(x.data$mah.col >= 5)
   sales.data$discordant[x.disc] <- 1
   sales.data$disc.fields[x.disc] <- paste0(sales.data$disc.fields[x.disc], 'price v tot.sf | ')
   sales.data$disc.type[x.disc] <- paste0(sales.data$disc.type[x.disc], 'MV: 1% Mah Quant | ')
-  
 ```
 
 #### Write to database
 
 To finish the exploration and data cleaning, we write the data (as **cleanSales**) back to the database, first converting the sale price back to a character value.
 
-```{r eval=FALSE}  
-
+``` r
   # Convert dates to character
   sales.data$sales.date <- as.character(sales.data$sales.date)
   
   # Write to the database
   dbWriteTable(db.conn, 'cleanSales', sales.data, row.names=FALSE, overwrite=TRUE)
-
 ```
 
 And then we close the connection to the database.
 
-```{r eval=FALSE}  
-
+``` r
   dbDisconnect(db.conn)
-
 ```
 
-## Chapter 10
+Chapter 10
+----------
 
 In chapter we cover the price modeling process.
 
-As always, we begin with a set of preliminary commands.  First, we load the necessary libraries.
+As always, we begin with a set of preliminary commands. First, we load the necessary libraries.
 
-```{r eval=FALSE}  
-
+``` r
   library(sf)
   library(sp)
   library(tidyverse)
@@ -2845,85 +2518,69 @@ As always, we begin with a set of preliminary commands.  First, we load the nece
   library(car)
   library(lmtest)
   library(plm)
-
 ```
 
 Then we set the paths to the data and code.
 
-```{r eval=FALSE}  
-
+``` r
   data.dir <- 'c:/temp/'
   code.dir <- 'c:/code/research/REAIA_book/'
-  
 ```
 
 We then load the custom functions.
 
-```{r eval=FALSE}  
-
+``` r
   source(paste0(code.dir, 'custom_functions.R'))  
-
 ```
 
-And finally we set the location to the database and establish a connection to it. 
+And finally we set the location to the database and establish a connection to it.
 
-```{r eval=FALSE}  
-
+``` r
   # Set path to database
   data.db <- file.path(data.dir, 'seattleCaseStudy.db')
   
   # Establish connection
   db.conn <- dbConnect(dbDriver('SQLite'), data.db)
-
 ```
 
 #### Load data
 
 We begin by loading the sales data from the database.
 
-```{r eval=FALSE}  
-
+``` r
     sales.data <- dbReadTable(db.conn, 'cleanSales')
-
 ```
 
-Next, we transform the sales date to the R date format. 
+Next, we transform the sales date to the R date format.
 
-```{r eval=FALSE}  
-  
+``` r
   sales.data$sales.date <- as.Date(sales.data$sales.date)
-
 ```
 
-#### Basic Price Modeling 
+#### Basic Price Modeling
 
 We begin the price modeling be specificy a basic linear model; one that includes most of the variables (generally non-spatial) that could possibly influence sales price.
 
-```{r eval=FALSE}  
-
+``` r
   base.lm <- lm(log(sale.price) ~ as.factor(present.use) + lot.size + 
                   tot.sf + bsmt.sf + gar.bsmt.sf + gar.att.sf + deck.sf + 
                   bldg.grade + condition + eff.age + baths + beds + 
                   traffic.noise + view.best + is.waterfront + topo + restr.szshp +
                   sales.date,
                 data=sales.data)
-
 ```
 
-To further assist in the specification building process we employ two additional techniques: 1) stepwise regression; and 2) Bayesian Model Averaging (BMA).  
+To further assist in the specification building process we employ two additional techniques: 1) stepwise regression; and 2) Bayesian Model Averaging (BMA).
 
 We specify a step-wise regression model.
 
-```{r eval=FALSE}  
-
+``` r
   step.lm <- stepAIC(base.lm, direction="both")
-
 ```
 
 Next, we specify a selection model through Bayesian Model Averaging (BMA).
 
-```{r eval=FALSE}  
-
+``` r
   bma.lm <- bicreg(y=log(sales.data$sale.price),
                    x=sales.data[ ,c('present.use', 'lot.size', 'tot.sf', 
                                     'bsmt.sf', 'gar.bsmt.sf', 'gar.att.sf', 'deck.sf',
@@ -2932,42 +2589,34 @@ Next, we specify a selection model through Bayesian Model Averaging (BMA).
                                     'topo', 'restr.szshp', 'sales.date')])
 
   summary(bma.lm)
-  
 ```
 
 Based on the results from the stepwise and the BMA process, we make a number of transformations to the data.
 
 First we combine home condition levels 1 and 2 into level 2
 
-```{r eval=FALSE}  
-
+``` r
   sales.data$condition[sales.data$condition == 1] <- 2
-
 ```
 
 Next, we combine the traffic noise levels 2 and 3 into level 2
 
-```{r eval=FALSE}  
-
+``` r
   sales.data$traffic.noise[sales.data$traffic.noise == 3] <- 2
-
 ```
 
-And then we combine the six smallest view.best categories into a single other view level. 
+And then we combine the six smallest view.best categories into a single other view level.
 
-```{r eval=FALSE}  
-
+``` r
   view.combine <- which(sales.data$view.best %in% c('view.other', 'view.smwater',
                                                     'view.lkwash', 'view.puget', 
                                                     'view.rainier', 'view.terr'))
   sales.data$view.best[view.combine] <- 'view.other'
-
 ```
 
-After the transformations we retest the BMA process with the new variables. 
+After the transformations we retest the BMA process with the new variables.
 
-```{r eval=FALSE}  
-
+``` r
   bma.lm <- bicreg(y=log(sales.data$sale.price),
                    x=sales.data[ ,c('present.use', 'lot.size', 'tot.sf', 
                                     'bsmt.sf', 'gar.bsmt.sf', 'gar.att.sf', 'deck.sf',
@@ -2976,71 +2625,59 @@ After the transformations we retest the BMA process with the new variables.
                                     'topo', 'restr.szshp', 'sales.date')])
 
   summary(bma.lm)
-
 ```
 
-Given the information from the stepwise and BMA models together with the variable transformations, we respecify the base linear model. 
+Given the information from the stepwise and BMA models together with the variable transformations, we respecify the base linear model.
 
-```{r eval=FALSE}  
-
+``` r
   base.lm <- lm(log(sale.price) ~ as.factor(present.use) + lot.size + 
                   tot.sf + bsmt.sf + gar.att.sf + deck.sf + 
                   bldg.grade + condition + eff.age + baths + beds + 
                   traffic.noise + view.best + is.waterfront +
                   sales.date,
                 data=sales.data)
-
 ```
 
-#### Diagnostics 
+#### Diagnostics
 
-We now run some diagnostics on the base model. 
+We now run some diagnostics on the base model.
 
-We start by testing for multicollinearity.  we check the variance inflation factors (VIF) and find that none of them exceed 10, the standard warning level. 
+We start by testing for multicollinearity. we check the variance inflation factors (VIF) and find that none of them exceed 10, the standard warning level.
 
-```{r eval=FALSE}  
-
+``` r
   vif(base.lm)
   sqrt(vif(base.lm)) > 2
-
 ```
 
-Next, we test for heteroskedasticity with two Breusch-Pagan tests, one studentized, one not. We find heteroskedasticity in studentized test, but not in the other. 
+Next, we test for heteroskedasticity with two Breusch-Pagan tests, one studentized, one not. We find heteroskedasticity in studentized test, but not in the other.
 
-```{r eval=FALSE}  
-
+``` r
   # Studentized
   bptest(base.lm)
   
   # Not studentized
   ncvTest(base.lm)
-
 ```
 
-Given the presence of heteroskedasticity, we then apply White's correction to the standard errors to see if any of the previously significant variables drop out.  
+Given the presence of heteroskedasticity, we then apply White's correction to the standard errors to see if any of the previously significant variables drop out.
 
-```{r eval=FALSE}  
-
+``` r
   coeftest(base.lm, vcov=vcovHC(base.lm, "HC1"))
-
 ```
 
 Next, we test for spatial autocorrelation in the residuals of our model.
 
 We begin by converting the sales data to a spatial points data frame.
 
-```{r eval=FALSE}  
-
+``` r
   sales.sp <- SpatialPointsDataFrame(cbind(sales.data$longitude,
                                            sales.data$latitude),
                                      sales.data)
-
 ```
 
-We then build a spatial weights matrix of the observations, using an inverse distance-weighted, 10-nearest neighbors matrix. 
+We then build a spatial weights matrix of the observations, using an inverse distance-weighted, 10-nearest neighbors matrix.
 
-```{r eval=FALSE}  
-
+``` r
   # Create neighbor list (use 10 nearest) 
   nbList <- knn2nb(knearneigh(sales.sp, 10))
 
@@ -3055,75 +2692,61 @@ We then build a spatial weights matrix of the observations, using an inverse dis
                           glist = lapply(nbDists, dwf),
                           style="W",
                           zero.policy=T))
-
 ```
 
-Using the spatial weights matrix, we then apply a Moran's I test.  We find signification spatial autocorrelation. 
-    
-```{r eval=FALSE}  
-    
+Using the spatial weights matrix, we then apply a Moran's I test. We find signification spatial autocorrelation.
+
+``` r
   mi.test <- moran.test(base.lm$resid, swm, zero.policy=TRUE)
-
 ```
 
-Next, we use a Lagrange Multiplier test to determine if the spatial dependence is in the dependent variable (spatial lag) or in the model errors (spatial error). 
- 
-```{r eval=FALSE}  
- 
+Next, we use a Lagrange Multiplier test to determine if the spatial dependence is in the dependent variable (spatial lag) or in the model errors (spatial error).
+
+``` r
   lm.test <- lm.LMtests(base.lm, 
                         swm,
                         test=c("LMerr", "LMlag", "RLMerr", "RLMlag"))
-
 ```
- 
-#### Spatial Models 
 
-Finding spatial autocorrelation in the error terms of our model, we now specify a spatial error model. We use the same spatial weights matrix specified above. 
+#### Spatial Models
 
-```{r eval=FALSE}  
+Finding spatial autocorrelation in the error terms of our model, we now specify a spatial error model. We use the same spatial weights matrix specified above.
 
+``` r
    mod.se <- errorsarlm(as.formula(base.lm),
                         data=sales.sp,
                         swm, 
                         method="spam", 
                         zero.policy=TRUE)
-
 ```
 
-We then test for spatial autocorrelation in the error terms of the spatial model. 
+We then test for spatial autocorrelation in the error terms of the spatial model.
 
-```{r eval=FALSE}  
-
+``` r
    mi.test.se <- moran.test(mod.se$resid, swm, zero.policy=TRUE)
-
 ```
 
-Spatial heterogeneity may also be found in a model covering a large geographic area the size of Seattle.  We test for spatial heterogeneity in our model (and data) through the use of a geographically weighted regression (GWR). 
+Spatial heterogeneity may also be found in a model covering a large geographic area the size of Seattle. We test for spatial heterogeneity in our model (and data) through the use of a geographically weighted regression (GWR).
 
 We do so by first specificying the geographically weighted model (bandwidth=.1)
 
-```{r eval=FALSE}  
-   
+``` r
    mod.gwr <-gwr(base.lm, sales.sp, bandwidth=.1)
+```
 
-```    
-  
 We then examine the results of the GWR and find some spatial heterogeniety.
 
-```{r eval=FALSE}  
-
+``` r
     summary(mod.gwr$SDF@data)
-
 ```
 
 #### Sensitivity Tests
 
-We now test the sensitivity of our model to various changes in specification, discordant values and data sample. After specifying each model we compare the coefficient estimates to those of the base model to check for robustness of the model. 
+We now test the sensitivity of our model to various changes in specification, discordant values and data sample. After specifying each model we compare the coefficient estimates to those of the base model to check for robustness of the model.
 
-We begin with sensitivity to specification.  First we re-estimate the final spatial error model, but remove any variables explicitly tied to the location of the observation (view, traffic noise, waterfront, etc.)
+We begin with sensitivity to specification. First we re-estimate the final spatial error model, but remove any variables explicitly tied to the location of the observation (view, traffic noise, waterfront, etc.)
 
-```{r eval=FALSE}  
-
+``` r
    mod.se.sens.s1 <- errorsarlm(log(sale.price) ~ as.factor(present.use) + lot.size + 
                                      tot.sf + bsmt.sf + gar.att.sf + deck.sf + 
                                      bldg.grade + condition + eff.age + baths + beds + 
@@ -3136,8 +2759,7 @@ We begin with sensitivity to specification.  First we re-estimate the final spat
 
 Next, we remove accessory home characteristics such as basement size, garage size, etc. from the model.
 
-```{r eval=FALSE}  
-
+``` r
    mod.se.sens.s2 <- errorsarlm(log(sale.price) ~ as.factor(present.use) + lot.size + 
                                   tot.sf + 
                                   bldg.grade + condition + eff.age + baths + beds + 
@@ -3146,13 +2768,11 @@ Next, we remove accessory home characteristics such as basement size, garage siz
                                 swm, 
                                 method="spam", 
                                 zero.policy=TRUE)
-
 ```
 
-Then we remove bedrooms count, bathroom count and home condition, leaving a rather sparse model. 
+Then we remove bedrooms count, bathroom count and home condition, leaving a rather sparse model.
 
-```{r eval=FALSE}  
-
+``` r
    mod.se.sens.s3 <- errorsarlm(log(sale.price) ~ as.factor(present.use) + lot.size + 
                                   tot.sf + bldg.grade + eff.age + 
                                   sales.date,
@@ -3160,25 +2780,22 @@ Then we remove bedrooms count, bathroom count and home condition, leaving a rath
                                 swm, 
                                 method="spam", 
                                 zero.policy=TRUE)
-   
 ```
 
-Finally, we re-specify the above as a simple ordinary least squares model. 
+Finally, we re-specify the above as a simple ordinary least squares model.
 
-```{r eval=FALSE}  
-
+``` r
    mod.se.sens.s4 <- lm(log(sale.price) ~ as.factor(present.use) + lot.size + 
                           tot.sf + bldg.grade + eff.age + 
                           sales.date,
                         data=sales.data)
 ```
 
-Next, we test for sensitivity to discordant values.  
+Next, we test for sensitivity to discordant values.
 
-First, we test for sensitivity to all discordant values.  Because we are changing the sample of observations we must specificy the spatial weights matrix before re-estimating the model. 
+First, we test for sensitivity to all discordant values. Because we are changing the sample of observations we must specificy the spatial weights matrix before re-estimating the model.
 
-```{r eval=FALSE}  
-  
+``` r
    # Extract only data with no discordant labels
    d1.data <- sales.sp[sales.sp@data$discordant == 0, ]
    
@@ -3199,14 +2816,11 @@ First, we test for sensitivity to all discordant values.  Because we are changin
                              data=d1.data,
                              swm, method="spam", 
                              zero.policy=TRUE)
+```
 
-```   
-   
-Next, we just remove the Univariate discordant observations and re-estimate.    
-   
-```{r eval=FALSE}  
+Next, we just remove the Univariate discordant observations and re-estimate.
 
-
+``` r
    # Extract only those with no univariate discordancy
    d2.id <- grep('UV:', sales.sp@data$disc.type)
    d2.data <- sales.sp[-d2.id, ]
@@ -3229,13 +2843,11 @@ Next, we just remove the Univariate discordant observations and re-estimate.
                              swm, 
                              method="spam", 
                              zero.policy=TRUE)
-
 ```
-   
-Finally, we just remove those observations with discordancy in the dependent variable.    
-   
-```{r eval=FALSE}  
 
+Finally, we just remove those observations with discordancy in the dependent variable.
+
+``` r
    # Extract only those with no sale price discordancy    
    d3.id <- grep('sale.price', sales.data$disc.fields)
    d3.data <- sales.sp[-d3.id, ]
@@ -3258,40 +2870,34 @@ Finally, we just remove those observations with discordancy in the dependent var
                              swm, 
                              method="spam", 
                              zero.policy=TRUE)
+```
 
-```   
-
-Our last set of sensitivity test examine the sensitivity of the model do the sample of data itself.  We run 10 cross validation tests where each one uses only 75% of the original sample.  We then compare the coefficient estimates from the 10 iterations to check the robustness of the model.  
+Our last set of sensitivity test examine the sensitivity of the model do the sample of data itself. We run 10 cross validation tests where each one uses only 75% of the original sample. We then compare the coefficient estimates from the 10 iterations to check the robustness of the model.
 
 We begin by setting up a capture list and then starting a loop through 10 iterations.
 
-```{r eval=FALSE}  
-      
+``` r
    # Create capture list
    cv.list <- list()
    
    # Loop through and re-estimate model
    for(i in 1:10){
-
 ```
 
 Within each iteration, we begin by setting a random seed and then selecting a random 75% sample from the data.
 
-```{r eval=FALSE}  
-
+``` r
      # Set seed for consistent sampling
      set.seed(i)
      
      # Sample 75% of observations
      cv.id <- sample(1:nrow(sales.sp), round(nrow(sales.sp) * .75), 0)
      cv.data <- sales.sp[-cv.id, ]
-     
 ```
 
-Next, we re-specify the spatial weights matrix. 
+Next, we re-specify the spatial weights matrix.
 
-```{r eval=FALSE}  
-     
+``` r
      # Calculate neighbors
      nbList <- knn2nb(knearneigh(cv.data, 10))
      
@@ -3305,36 +2911,32 @@ Next, we re-specify the spatial weights matrix.
                              zero.policy=T))
 ```
 
-And then re-estimate the model. 
+And then re-estimate the model.
 
-```{r eval=FALSE}  
-
+``` r
      cv.list[[i]] <- errorsarlm(as.formula(base.lm),
                                data=cv.data,
                                swm, method="spam", zero.policy=TRUE)
     
   }
-
 ```
 
 #### Save workspace
 
 Instead of writing to the database, we save the entire workspace for use later.
 
-```{r eval=FALSE}  
-
+``` r
   save.image(file.path(data.dir, 'model_workspace.RData'))
-
 ```
 
-## Chapter 12
+Chapter 12
+----------
 
-In this chapter we present a case study of combining traditional real estate pricing models with data non-traditional data from government and social media sources. 
+In this chapter we present a case study of combining traditional real estate pricing models with data non-traditional data from government and social media sources.
 
-As always, we begin with a set of preliminary commands.  First, we load the necessary libraries.
+As always, we begin with a set of preliminary commands. First, we load the necessary libraries.
 
-```{r eval=FALSE}  
-
+``` r
   library(sf)
   library(sp)
   library(tidyverse)
@@ -3351,48 +2953,38 @@ As always, we begin with a set of preliminary commands.  First, we load the nece
   library(lmtest)
   library(gstat)
   library(scales)
-
 ```
 
 Then we set the paths to the data and code.
 
-```{r eval=FALSE}  
-
+``` r
   data.dir <- 'c:/temp/'
   code.dir <- 'c:/code/research/REAIA_book/'
-  
 ```
 
 We then load the custom functions.
 
-```{r eval=FALSE}  
-
+``` r
   source(paste0(code.dir, 'custom_functions.R'))  
-
 ```
 
 #### Load Data
 
-We begin by loading the saved R workspace from the modeling chapter (10). 
+We begin by loading the saved R workspace from the modeling chapter (10).
 
-```{r eval=FALSE}  
-
+``` r
   load(file.path(data.dir, 'model_workspace.RData'))
-
 ```
 
-Next, we load the three different format of the spatial representations of the police beat boundaries. 
+Next, we load the three different format of the spatial representations of the police beat boundaries.
 
-```{r eval=FALSE}  
-
+``` r
   load(file=file.path(data.dir, 'geographic/beats.Rdata'))
-
 ```
 
-Finally, we load the crime and tweet sentiment data.  First we define the path to the database, set up a connection and then read in both the crime and the tweet data. 
+Finally, we load the crime and tweet sentiment data. First we define the path to the database, set up a connection and then read in both the crime and the tweet data.
 
-```{r eval=FALSE}  
-
+``` r
   # Set database location
   data.db <- file.path(data.dir, 'seattleCaseStudy.db')
   
@@ -3404,25 +2996,21 @@ Finally, we load the crime and tweet sentiment data.  First we define the path t
   
   # Read in tweet sentiment data
   tweet.data <- dbReadTable(db.conn, 'SentimentTweets')
-
 ```
 
 #### Relationship between Crime and Price
 
-We begin the case study analysis by looking at the relationship between crime and housing prices in Seattle in 2016. We do so by adding the localized crime counts to our base model (from chapter 10).  
+We begin the case study analysis by looking at the relationship between crime and housing prices in Seattle in 2016. We do so by adding the localized crime counts to our base model (from chapter 10).
 
-```{r eval=FALSE}  
-
+``` r
   crime.lm <- lm(update(as.formula(base.lm), . ~ . + crime.violent + crime.property + crime.traffic +
                    crime.behavior + crime.other),
                  data=sales.data)
-  
 ```
 
-Noting that spatial autocorrelation was heavily present before, we then re-estimate the 'crime' model with a spatial error specification. To do so, we convert the data to a spatial points data frame, build a spatial weights matrix and then esimate the spatial error model. 
+Noting that spatial autocorrelation was heavily present before, we then re-estimate the 'crime' model with a spatial error specification. To do so, we convert the data to a spatial points data frame, build a spatial weights matrix and then esimate the spatial error model.
 
-```{r eval=FALSE}  
-
+``` r
   # Build Spatial Points Data Frame
   sales.sp <- SpatialPointsDataFrame(cbind(sales.data$longitude,
                                            sales.data$latitude),
@@ -3446,15 +3034,13 @@ Noting that spatial autocorrelation was heavily present before, we then re-estim
                          swm,
                          method="spam", 
                          zero.policy=TRUE)
-  
 ```
 
-Seeing that under the spatial error model there is little remaining influence on price from crime, we also examine if rates of appreciation (not the underlying price levels) bear any relationship to crime levels.  We do this analysis at the beat level -- estimate appreciation vs crime rates per police beat. 
+Seeing that under the spatial error model there is little remaining influence on price from crime, we also examine if rates of appreciation (not the underlying price levels) bear any relationship to crime levels. We do this analysis at the beat level -- estimate appreciation vs crime rates per police beat.
 
 We begin by building a table containing the count of crimes of each type per police beat.
 
-```{r eval=FALSE}  
-
+``` r
   beat.crime <- dplyr::group_by(crime.data, zone.beat) %>% 
     dplyr::summarize(
       violent=length(which(crime.type =='violent')),
@@ -3463,48 +3049,38 @@ We begin by building a table containing the count of crimes of each type per pol
       traffic = length(which(crime.type == 'traffic')),
       other = length(which(crime.type == 'other')),
       all= n())
-
 ```
 
 We then calculate the appreciation rate (from Q1 to Q4) for each beat.
 
 To do so, we start by assigning each beat a blank value for appreciation rate and sales count.
 
-```{r eval=FALSE}  
-
+``` r
   beat.crime$appr <- 0
   beat.crime$sales <- 0
-
 ```
 
 Next, we loop through each beat
 
-```{r eval=FALSE}  
-
+``` r
   for(b in 1:nrow(beat.crime)){
-
 ```
 
 Within each iteration, we begin by selecting only those sales within the beat.
 
-```{r eval=FALSE}  
-
+``` r
     beat.sales <- sales.data[sales.data$beat == beat.crime$zone.beat[b], ]
-
 ```
 
-If there are at least 100 sales in the beat we proceed, if not we give that beat a 0 and disqualify it from the anlaysis. 
+If there are at least 100 sales in the beat we proceed, if not we give that beat a 0 and disqualify it from the anlaysis.
 
-```{r eval=FALSE}  
-
+``` r
     if(nrow(beat.sales) >= 100){
+```
 
-```      
-      
-We convert the data to a spatial points data frame and then re-build a spatial weights matrix.      
-      
-```{r eval=FALSE}  
-      
+We convert the data to a spatial points data frame and then re-build a spatial weights matrix.
+
+``` r
       # Create spatial points data frame
       beat.sp <- SpatialPointsDataFrame(cbind(beat.sales$longitude,
                                               beat.sales$latitude),
@@ -3521,23 +3097,20 @@ We convert the data to a spatial points data frame and then re-build a spatial w
                               glist = lapply(nbDists, dwf), 
                               style="W",
                               zero.policy=T))
-```      
-      
-We then remove the sales data from the model specification and add quarterly dummy variables. 
-      
-```{r eval=FALSE}  
-      
+```
+
+We then remove the sales data from the model specification and add quarterly dummy variables.
+
+``` r
       # Create model specification
       beat.spec <- as.formula(base.lm)
       beat.spec <- update(beat.spec, ~ . - sales.date)
       beat.spec <- update(beat.spec, ~ . + as.factor(qtr))
+```
 
-```      
-      
-If there are no waterfront properties in this beat, we remove this variable from the model specification.  If there are only one type of view in the beat we remove that variable as well.       
-      
-```{r eval=FALSE}  
-      
+If there are no waterfront properties in this beat, we remove this variable from the model specification. If there are only one type of view in the beat we remove that variable as well.
+
+``` r
       # Remove waterfront if none exist
       if(length(which(beat.sales$is.waterfront == 1)) == 0){
         beat.spec <- update(beat.spec, ~ . - is.waterfront)
@@ -3547,24 +3120,22 @@ If there are no waterfront properties in this beat, we remove this variable from
       if(length(table(beat.sales$view.best)) <= 1){
         beat.spec <- update(beat.spec, ~ . - view.best)
       }
-```      
-      
-Then we estimate a price model for each beat.       
-      
-```{r eval=FALSE}  
-      
+```
+
+Then we estimate a price model for each beat.
+
+``` r
       # Estimate the model
       beat.se <- tryCatch(errorsarlm(beat.spec,
                                      data=beat.sp,
                                      swm, 
                                      method="spam", 
                                      zero.policy=TRUE), silent=T)
-```      
-      
-If the model estimation succeeds, we then extract the coefficient indicating the change in prices from 2016 Q1 to 2016 Q4.       
-      
-```{r eval=FALSE}  
-      
+```
+
+If the model estimation succeeds, we then extract the coefficient indicating the change in prices from 2016 Q1 to 2016 Q4.
+
+``` r
       # If model is successful
       if(class(beat.se) == 'sarlm'){
         
@@ -3581,12 +3152,11 @@ If the model estimation succeeds, we then extract the coefficient indicating the
         beat.crime$sales[b] <- nrow(beat.sales)
         
       } else {
-```      
-      
-If the model is unsuccessful or if there are fewer than 100 sales in the beat, then we set the appreciation rate to NA.  This closes the loop through the police beats. 
+```
 
-```{r eval=FALSE}  
-        
+If the model is unsuccessful or if there are fewer than 100 sales in the beat, then we set the appreciation rate to NA. This closes the loop through the police beats.
+
+``` r
         beat.crime$appr[b] <- NA
       
       }
@@ -3596,42 +3166,35 @@ If the model is unsuccessful or if there are fewer than 100 sales in the beat, t
       beat.crime$appr[b] <- NA
     }  
   }
+```
 
-```      
+Next, we add the size of each beat to the beat summary data frame.
 
-Next, we add the size of each beat to the beat summary data frame. 
-      
-```{r eval=FALSE}  
-
+``` r
   beat.crime$area <- beats.sp@data$size[match(beat.crime$zone.beat,
                                               beats.sp@data$beat)]
-```      
-      
-We then remove all beats for which an appreciation rate was not estimated.       
-      
-```{r eval=FALSE}  
-  
-  beat.crime <- beat.crime[!is.na(beat.crime$appr), ]
+```
 
-```      
-      
-Then, we convert all raw counts of crime into crime per square mile figures.       
-      
-```{r eval=FALSE}  
-  
+We then remove all beats for which an appreciation rate was not estimated.
+
+``` r
+  beat.crime <- beat.crime[!is.na(beat.crime$appr), ]
+```
+
+Then, we convert all raw counts of crime into crime per square mile figures.
+
+``` r
   beat.crime$viol.area <- beat.crime$violent / beat.crime$area
   beat.crime$prop.area <- beat.crime$property / beat.crime$area
   beat.crime$beha.area <- beat.crime$behavior / beat.crime$area
   beat.crime$traf.area <- beat.crime$traffic / beat.crime$area
   beat.crime$othe.area <- beat.crime$other / beat.crime$area
   beat.crime$all.area <- beat.crime$all / beat.crime$area
+```
 
-```      
+Finally, we plot the relationship between price appreciation and crimes per square mile for all of the applicable beats across all five crime types as well as the aggregated count of crimes.
 
-Finally, we plot the relationship between price appreciation and crimes per square mile for all of the applicable beats across all five crime types as well as the aggregated count of crimes. 
-      
-```{r eval=FALSE}  
-  
+``` r
   # All crime
   all.crime.plot <- ggplot(beat.crime, 
                            aes(x=all.area, y=appr)) + 
@@ -3691,30 +3254,26 @@ Finally, we plot the relationship between price appreciation and crimes per squa
     ylab("2016 Appreciation Rate:\nQ1 to Q4\n") + 
     ggtitle('Other vs Appreciation') +
     theme(plot.title = element_text(hjust = 0.5))
+```
 
-```      
-  
 #### Relationship between Sentiment and House Prices
 
-The final section of our case study looks at the relationship between local sentiment (as measured by Twitter) and localized house price changes. 
-      
-We begin by converting the tweet data to a SpatialPointsDataFrame.  This includes changing the coordinate reference system.       
-      
-```{r eval=FALSE}  
-  
+The final section of our case study looks at the relationship between local sentiment (as measured by Twitter) and localized house price changes.
+
+We begin by converting the tweet data to a SpatialPointsDataFrame. This includes changing the coordinate reference system.
+
+``` r
   # Conver to SPDF
   tweet.sp <- SpatialPointsDataFrame(cbind(tweet.data$longitude, tweet.data$latitude),
                                      data=tweet.data)
 
   # Fix the coordinate reference system
   proj4string(tweet.sp) <- CRS(proj4string(beats.sp))
+```
 
-```      
+We then make a simple map showing the location of the sentiment-scored tweets.
 
-We then make a simple map showing the location of the sentiment-scored tweets.  
-      
-```{r eval=FALSE}  
-  
+``` r
  ## Make plot of sentiment tweets
     
   sent.map <- ggplot() + 
@@ -3733,12 +3292,11 @@ We then make a simple map showing the location of the sentiment-scored tweets.
     theme(legend.position='bottom', 
           axis.text=element_blank(),
           axis.ticks = element_blank())
-```      
+```
 
-Next, we take the point data tweets and convert them to a surface (areal coverage) using a custom point to surface function.  (Detailed code on the point to surface process can be found in the *custom_functions.R* file.)
-      
-```{r eval=FALSE}  
-  
+Next, we take the point data tweets and convert them to a surface (areal coverage) using a custom point to surface function. (Detailed code on the point to surface process can be found in the *custom\_functions.R* file.)
+
+``` r
  ## Create sentiment surface
   
   # Build surface
@@ -3747,22 +3305,19 @@ Next, we take the point data tweets and convert them to a surface (areal coverag
                              res=.004, 
                              clip=seattle.bound, 
                              idp.val=5)
-```      
-      
-We extract the values from this surface and convert them to a simple data frame object.      
-      
-```{r eval=FALSE}  
-  
+```
+
+We extract the values from this surface and convert them to a simple data frame object.
+
+``` r
   surf.df <- data.frame(long=sent.surf@coords[,1],
                         lat=sent.surf@coords[,2],
                         sentiment=sent.surf@data$var1.pred)
-  
 ```
 
-We then make a map showing the localized sentiment in each area of Seattle. 
+We then make a map showing the localized sentiment in each area of Seattle.
 
-```{r eval=FALSE}  
-
+``` r
   sent.map <- ggplot(surf.df, aes(x=long, y=lat, z=sentiment)) +
     geom_tile(aes(fill = sentiment), alpha=.7) +
     scale_fill_gradient2(low=muted('red'), high=muted('blue'),
@@ -3777,53 +3332,45 @@ We then make a map showing the localized sentiment in each area of Seattle.
           axis.text=element_blank(),
           axis.ticks = element_blank(),
           plot.title = element_text(hjust = 0.5))
-```      
+```
 
-Next, we estimate the local price appreciation at the same scale as the sentiment surface.  To do so, we use a Geographycally Weighted Regression (GWR).
+Next, we estimate the local price appreciation at the same scale as the sentiment surface. To do so, we use a Geographycally Weighted Regression (GWR).
 
-We begin by updating the base regression specification by removing sales date and insert a quarterly dummy variable.  
-      
-```{r eval=FALSE}  
+We begin by updating the base regression specification by removing sales date and insert a quarterly dummy variable.
 
+``` r
   gwr.spec <- update(as.formula(base.lm), ~ . - sales.date)
   gwr.spec <- update(gwr.spec, ~ . + as.factor(qtr))
+```
 
-```      
+We then convert the sales data into a SpatialPointsDataFrame object.
 
-We then convert the sales data into a SpatialPointsDataFrame object. 
-      
-```{r eval=FALSE}  
-  
+``` r
   gwr.data <- SpatialPointsDataFrame(cbind(sales.data$longitude,
                                            sales.data$latitude),
                                      data=sales.data)
-```      
-      
-And then, estimate a geographically weighted regression, estimating a model at each one of the grid points in the sentiment surface.        
-      
-```{r eval=FALSE}  
-  
+```
+
+And then, estimate a geographically weighted regression, estimating a model at each one of the grid points in the sentiment surface.
+
+``` r
   price.gwr <-gwr(gwr.spec, gwr.data, fit.points=sent.surf@coords, bandwidth=.01)
+```
 
-```      
+Next, we extract the coefficients for price appreciation (from Q1 to Q4) from the GWR results and add then to the data frame containing the local sentiment scores.
 
-Next, we extract the coefficients for price appreciation (from Q1 to Q4) from the GWR results and add then to the data frame containing the local sentiment scores. 
-      
-```{r eval=FALSE}  
-  
+``` r
   # Extract the coefficients for Q4 appreciations
   gwr.coef <- price.gwr$SDF@data
   appr.coef <- gwr.coef[, ncol(gwr.coef)]
   
   # Add these to the data frame of surfact values
   surf.df$appr <- appr.coef
+```
 
-```      
-      
-And finally, we plot the relationship between the local sentiment scores and the local price appreciation.       
-      
-```{r eval=FALSE}  
-  
+And finally, we plot the relationship between the local sentiment scores and the local price appreciation.
+
+``` r
   sent.appr.plot <- ggplot(surf.df, aes(x=sentiment, y=appr)) + 
     geom_point(alpha=.4, size=.9) + 
     stat_smooth(size=2, se=TRUE, color='red') +
@@ -3834,16 +3381,16 @@ And finally, we plot the relationship between the local sentiment scores and the
     # coord_cartesian(ylim=c(-.07, .17)) + 
     ggtitle('Local House Appreciation vs Sentiment') +
     theme(plot.title = element_text(hjust = 0.5))
-
-```      
-      
-#### Save workspace for Case Study analysis
-
-We conclude the case studies by save the entire workspace to an R data object for future tasks such as visualization. 
-
-```{r eval=FALSE}  
-  
-  save.image(file.path(data.dir, 'casestudy_workspace.RData'))
-  
 ```
 
+#### Save workspace for Case Study analysis
+
+We conclude the case studies by save the entire workspace to an R data object for future tasks such as visualization.
+
+``` r
+  save.image(file.path(data.dir, 'casestudy_workspace.RData'))
+```
+
+[1] R Core Team (2017). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL <https://www.R-project.org/>.
+
+[2] This can be reduced by deleted the downloaded ZIP files after extraction.
