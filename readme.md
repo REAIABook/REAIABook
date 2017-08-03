@@ -1,3 +1,6 @@
+Overview
+--------
+
 The examples and the case studies presented in this book are conducted in the R computing language.[1] All data and code necessary to reproduce the cast studies are provided on this website or are downloadable free of charge from the internet. The code for each chapter (found at <https://github.com/REAIABook/REAIABook>) can be run to reproduce the examples and analyses that are found throughout the book.
 
 Before you start, you need to do two things.
