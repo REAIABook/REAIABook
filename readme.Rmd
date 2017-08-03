@@ -9,7 +9,7 @@ output:
 
 ## Overview
 
-The examples and the case studies presented in this book are conducted in the R computing language.^[R Core Team (2017). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL <https://www.R-project.org/>.]  All data and code necessary to reproduce the cast studies are provided on this website or are downloadable free of charge from the internet.  The code for each chapter (found at <https://github.com/REAIABook/REAIABook>) can be run to reproduce the examples and analyses that are found throughout the book.    
+The examples and the case studies presented in this book are conducted in the R computing language.^[R Core Team (2017). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL <https://www.R-project.org/>.]  All data and code necessary to reproduce the case studies are provided on this website or are downloadable free of charge from the internet.  The code for each chapter (found at <https://github.com/REAIABook/REAIABook>) can be run to reproduce the example analyses that are found throughout the book.    
 
 Before you start, you need to do two things.  
 
@@ -17,7 +17,7 @@ Before you start, you need to do two things.
 2.  Download RStudio from <https://www.rstudio.com/products/rstudio/download/.> and install.    
 Note that RStudio is not necessary but it is a helpful interactive development environment (IDE) that will make working with the provided R code easier.  The code below was built in 64-bit R, version 3.4.0.     
 
-Once you have opened this can you move on to the code from the individual chapters. Do note that in many cases, code from one chapter depends on code and analyses performed in a previous chapter.  You should also set aside a directory on your computer where you can save the raw and intermediate data as well as the outputs from the graphing and modeling exercises.  You will need to manually input this directory into the code for each chapter starting in chapter 5.  The code is written into modules by chapter, with the intent that each can be executed independently and as a result preliminary or setup commands are entered at the beginning of each chapter's code.      
+Once you have downloaded R/RStudio you can move on to the code from the individual chapters. Do note that in many cases, code from one chapter depends on code and analyses performed in a previous chapter.  You should also set aside a directory on your computer where you can save the raw and intermediate data as well as the outputs from the graphing and modeling exercises.  You will need to manually input this directory into the code for each chapter starting in chapter 5.  The code is written into modules by chapter, with the intent that each can be executed independently and, as a result, preliminary or setup commands are entered at the beginning of each chapter's code.      
 
 Finally, please note that the code below has been written with the aim of readability and exposure to different approaches to solving the same tasks and not with the sole aim of efficiency. Please do issue pull requests for errors (which are likely) but not for improvements to code efficiency. 
 
@@ -29,9 +29,9 @@ There are two primary ways to get the code and data from this site.
 
 1. If you don't have a Github account you can click on the green "Clone or Download" button and download a .ZIP file and extract the files on your computer.
 
-2. If you have a Github account, download and install the Github desktop application.  Make sure you are logged in in the application.  Then click the green "Clone or Download" button and select "Open in Desktop" and follow the instructions to clone (copy) the files to your computer. 
+2. If you have a Github account, download and install the Github desktop application.  Make sure you are logged in to the application.  Then click the green "Clone or Download" button and select "Open in Desktop" and follow the instructions to clone (copy) the files to your computer. 
 
-Also you should allocate a directory for the data that will be downloaded in the code that has at least 2 GB of open space.  This should be used as the data dirctory (**data.dir**) in the code. 
+Also you should allocate a directory for the data that will be downloaded in the code that has at least 2 GB of open space.  This should be used as the data directory (**data.dir**) in the code. 
 
 ## Chapter 1
 
