@@ -20,7 +20,7 @@
  
   #data.dir <- 'c:/dropbox/research/bigdatabook/data/'
   data.dir <- 'c:/temp/'
-  code.dir <- 'c:/code/research/REAIA_book/'
+  code.dir <- 'c:/code/REAIAbook/'
   
  ## Load custom source files
   
@@ -351,8 +351,8 @@
  ## Add location data to sales  
   
   # Transform: Create Separate Lat/long Columns 
-  parcel.centroids$longitude <- unlist(lapply(parcel.centroids$parcel.centroids, function(x) x[1]))
-  parcel.centroids$latitude <- unlist(lapply(parcel.centroids$parcel.centroids, function(x) x[2]))
+  parcel.centroids$longitude <- unlist(lapply(parcel.centroids$geometry, function(x) x[1]))
+  parcel.centroids$latitude <- unlist(lapply(parcel.centroids$geometry, function(x) x[2]))
   
   # Save Data
   save(parcel.centroids, 
@@ -363,6 +363,9 @@
   sales.data <- merge(sales.data, 
                       parcel.centroids[ , c('pinx', 'beat', 'longitude', 'latitude')],
                       by='pinx')
+  
+  # Remove the geometry field
+  sales.data$geometry <- NULL
   
   # Transform:  Reclassify the zoning variable
   sales.data$zoning[grep('LR1', sales.data$zoning)] <- 'LR1'
@@ -538,15 +541,6 @@
   
   # Close
   dbDisconnect(db.conn)
-  
-##########################################################################################  
-  
-  
-  
-  
-  
-  
-  
-  
+
 ##########################################################################################
 ##########################################################################################

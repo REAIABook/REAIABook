@@ -279,7 +279,7 @@ Next, the user must enter the directory where the data is stored, **data.dir** a
 ```{r eval=FALSE}
 
   data.dir <- 'c:/temp/'             # For Example
-  code.dir <- 'c:/code/REAIA_Book/'  # For Example
+  code.dir <- 'c:/code/reaiaBook/'  # For Example
 
 ```
 
@@ -643,7 +643,7 @@ We begin with a set of prelimnary commands.  Specifically, we load the necessary
  ## Set data and code directory
  
   data.dir <- 'c:/temp/'                      # For example
-  code.dir <- 'c:/code/research/REAIA_book/'  # For example
+  code.dir <- 'c:/code/REAIAbook/'  # For example
   
  ## Load custom source files
   
@@ -666,7 +666,7 @@ We then set the path to our active database and establish a connection to it.
 
 #### Preparing Sales Data
 
-We start the process by preparing the sales data.  First, we load the data from the database
+We start the process by preparing the sales data.  First, we load the data from the database.
 
 ```{r eval=FALSE}  
 
@@ -674,7 +674,7 @@ We start the process by preparing the sales data.  First, we load the data from 
   
 ```
 
-First we filter out observations that are missing critical information; parcel identification numbers and sale prices.  Those with missing sale price or prices of 0 are usually non arm's length transactions which are not relevant to our analysis.  
+Then we filter out observations that are missing critical information; parcel identification numbers and sale prices.  Those with missing sale price or prices of 0 are usually non arm's length transactions which are not relevant to our analysis.  
 
 ```{r eval=FALSE}  
   
@@ -686,7 +686,7 @@ First we filter out observations that are missing critical information; parcel i
   
 ```
 
-Next we perform a number of options of options to transform and then filter on the sale date.  We begin by re-ordering the sales date into a standard month/date/year format and then convert this to a 'date' data type within R.
+Next we perform a number of operations to transform and then filter on the sale date.  We begin by re-ordering the sales date into a standard month/date/year format and then convert this to a 'date' data type within R.
 
 ```{r eval=FALSE}  
   
@@ -701,7 +701,7 @@ Next we perform a number of options of options to transform and then filter on t
   
 ```
 
-Then we create a sales year field
+Then we create a sales year field.
 
 ```{r eval=FALSE}  
   
@@ -753,7 +753,7 @@ We then add fields denoting the quarter of sales (Q1 to Q4) and the month of sal
 
 We now turn to other transformation and filters.
 
-First, we convert the two-piece parcel identification number (PIN) into a single value, **pinX** that will link to the ID created for the geographical shapefile.  
+First, we convert the two-piece parcel identification number (PIN) into a single value, **pinx** that will link to the ID created for the geographical shapefile.  
 
 ```{r eval=FALSE}  
 
@@ -761,7 +761,7 @@ First, we convert the two-piece parcel identification number (PIN) into a single
  
 ```
 
-Some property show an abnormally high number of transactions.  We filter out any property that has transacted more than five time during the study period. (For all custom functions see the *custom_functions.R* file.)
+Some properties show an abnormally high number of transactions.  We filter out any property that has transacted more than five time during the study period. (For all custom functions see the *custom_functions.R* file.)
 
 ```{r eval=FALSE}  
 
@@ -969,7 +969,7 @@ We then do the same for the residential building data
 
 Next, we perform a number of preparation exercises on the residential building data.
 
-First, we sort the data by the individual building number, remove any properties with more than one building and then remove any remains observations that do not indicate the primary building (data error). We finish by removing the buildling number field.
+First, we sort the data by the individual building number, remove any properties with more than one building and then remove any remaining observations that do not indicate the primary building (data error). We finish by removing the building number field.
 
 ```{r eval=FALSE}  
 
@@ -1166,7 +1166,7 @@ Next, we calculate the areal extent (in square miles) of each beat area.  We do 
 
 ```  
   
-We then add these areal measurements to the beats sp object.  
+We then add these areal measurements to the beats *sp* object.  
   
 ```{r eval=FALSE}  
 
@@ -1231,8 +1231,8 @@ Next we extract the latitude and longitude values from the jointly held lat/long
 ```{r eval=FALSE}  
 
   # Transform: Create Separate Lat/long Columns 
-  parcel.centroids$longitude <- unlist(lapply(parcel.centroids$parcel.centroids, function(x) x[1]))
-  parcel.centroids$latitude <- unlist(lapply(parcel.centroids$parcel.centroids, function(x) x[2]))
+  parcel.centroids$longitude <- unlist(lapply(parcel.centroids$geometry, function(x) x[1]))
+  parcel.centroids$latitude <- unlist(lapply(parcel.centroids$geometry, function(x) x[2]))
 
 ```  
     
@@ -1252,6 +1252,9 @@ Now we integrate (join) the sales data and the parcel centroid data by the **pin
   sales.data <- merge(sales.data, 
                       parcel.centroids[ , c('pinx', 'beat', 'longitude', 'latitude')],
                       by='pinx')
+
+  # Remove the geometry field
+  sales.data$geometry <- NULL
 
 ```
 
@@ -1295,7 +1298,7 @@ First, we extract just the date values and convert to the R date format.
 
 ```
 
-We then extract the time of the reported crime and convert to a 24 hour format.
+We then extract the time of the reported crime and convert to a 24-hour format.
 
 ```{r eval=FALSE}  
                               
@@ -1329,7 +1332,7 @@ We then convert the crime date field to the R date format.
 
 ```
 
-Next, we re-classify the crime types from the 29 large categories into four: violent, property, behavior and traffic.  All smaller categories are considered other.  
+Next, we re-classify the crime types from the 29 large categories into four: violent, property, behavior and traffic.  All smaller categories are considered "other".  
 
 ```{r eval=FALSE}  
 
@@ -1438,7 +1441,7 @@ We then add a count of each crime type to the sale observation
 
 ```
 
-After every 100 sales complete we output the progress (this could be removed from code it will not impact performance)
+After every 100 sales complete we output the progress (this could be removed from code it will not impact performance).
 
 ```{r eval=FALSE}  
 
@@ -1448,7 +1451,7 @@ After every 100 sales complete we output the progress (this could be removed fro
 
 ```
 
-We close the loop
+We close the loop.
 
 ```{r eval=FALSE}  
 
@@ -1458,9 +1461,9 @@ We close the loop
 
 #### Prepare Sentiment Tweets
 
-We now prepare the sentiment tweet data
+We now prepare the sentiment tweet data.
 
-First we load in from the database
+First we load it in from the database.
 
 ```{r eval=FALSE} 
  
@@ -1500,7 +1503,7 @@ Next, we intersect the two in order to determine which tweets fall within the ci
 
 ```
 
-The sentiment score are integer values ranging from -5 to 5, based on their sentiment.  For the purposes of judging local sentiment we will only consider positive and negative sentiment, thus we must filter and transform the data.
+The sentiment scores are integer values ranging from -5 to 5, with low numbers being negative sentiment.  For the purposes of judging local sentiment we will only consider positive and negative sentiment, thus we must filter and transform the data.
 
 We start by removing all neutral tweet (sentiment of 0) from the data.
 
@@ -1518,7 +1521,7 @@ Then we convert all tweet to simply negative (-1) or positive (1)
 
 ```
 
-Finally, we extract just the data portion of the tweet sp object.
+Finally, we extract just the data portion of the tweet *sp* object.
 
 ```{r eval=FALSE}  
 
@@ -1528,9 +1531,9 @@ Finally, we extract just the data portion of the tweet sp object.
 
 ### Write Data Back to Database
 
-Finally, we write the non-spatial data back to the data base.
+Finally, we write the non-spatial data back to the database.
 
-First we convert the date fields in the sales and crime date back to simple character strings for storage purposes
+To do so we first convert the date fields in the sales and crime date back to simple character strings for storage purposes.
 
 ```{r eval=FALSE}  
 
@@ -1566,7 +1569,7 @@ Next, we write the crime data, overwriting the previous data.
 
 ```
 
-And, finally, we write the tweet sentiment data, again overwriting the previous data
+And, finally, we write the tweet sentiment data, again overwriting the previous data.
 
 ```{r eval=FALSE}  
 
@@ -1587,6 +1590,7 @@ We complete the preparation phase by closing the connection to the database.
   dbDisconnect(db.conn)
   
 ```
+
 
 ## Chapters 8 and 9
 
@@ -1614,7 +1618,7 @@ Then we set the paths to the code and the data
 ```{r eval=FALSE}  
 
   data.dir <- 'c:/temp/'                      # For Example
-  code.dir <- 'c:/code/research/REAIA_book/'  # For Example
+  code.dir <- 'c:/code/research/reaiabook/'  # For Example
 
 ```
 
@@ -2856,7 +2860,7 @@ Then we set the paths to the data and code.
 ```{r eval=FALSE}  
 
   data.dir <- 'c:/temp/'
-  code.dir <- 'c:/code/research/REAIA_book/'
+  code.dir <- 'c:/code/research/reaiabook/'
   
 ```
 
@@ -3362,7 +3366,7 @@ Then we set the paths to the data and code.
 ```{r eval=FALSE}  
 
   data.dir <- 'c:/temp/'
-  code.dir <- 'c:/code/research/REAIA_book/'
+  code.dir <- 'c:/code/research/reaiabook/'
   
 ```
 

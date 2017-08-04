@@ -1,7 +1,7 @@
 Overview
 --------
 
-The examples and the case studies presented in this book are conducted in the R computing language.[1] All data and code necessary to reproduce the cast studies are provided on this website or are downloadable free of charge from the internet. The code for each chapter (found at <https://github.com/REAIABook/REAIABook>) can be run to reproduce the examples and analyses that are found throughout the book.
+The examples and the case studies presented in this book are conducted in the R computing language.[1] All data and code necessary to reproduce the case studies are provided on this website or are downloadable free of charge from the internet. The code for each chapter (found at <https://github.com/REAIABook/REAIABook>) can be run to reproduce the example analyses that are found throughout the book.
 
 Before you start, you need to do two things.
 
@@ -9,7 +9,7 @@ Before you start, you need to do two things.
 2.  Download RStudio from <https://www.rstudio.com/products/rstudio/download/.> and install.
     Note that RStudio is not necessary but it is a helpful interactive development environment (IDE) that will make working with the provided R code easier. The code below was built in 64-bit R, version 3.4.0.
 
-Once you have opened this can you move on to the code from the individual chapters. Do note that in many cases, code from one chapter depends on code and analyses performed in a previous chapter. You should also set aside a directory on your computer where you can save the raw and intermediate data as well as the outputs from the graphing and modeling exercises. You will need to manually input this directory into the code for each chapter starting in chapter 5. The code is written into modules by chapter, with the intent that each can be executed independently and as a result preliminary or setup commands are entered at the beginning of each chapter's code.
+Once you have downloaded R/RStudio you can move on to the code from the individual chapters. Do note that in many cases, code from one chapter depends on code and analyses performed in a previous chapter. You should also set aside a directory on your computer where you can save the raw and intermediate data as well as the outputs from the graphing and modeling exercises. You will need to manually input this directory into the code for each chapter starting in chapter 5. The code is written into modules by chapter, with the intent that each can be executed independently and, as a result, preliminary or setup commands are entered at the beginning of each chapter's code.
 
 Finally, please note that the code below has been written with the aim of readability and exposure to different approaches to solving the same tasks and not with the sole aim of efficiency. Please do issue pull requests for errors (which are likely) but not for improvements to code efficiency.
 
@@ -22,9 +22,9 @@ There are two primary ways to get the code and data from this site.
 
 1.  If you don't have a Github account you can click on the green "Clone or Download" button and download a .ZIP file and extract the files on your computer.
 
-2.  If you have a Github account, download and install the Github desktop application. Make sure you are logged in in the application. Then click the green "Clone or Download" button and select "Open in Desktop" and follow the instructions to clone (copy) the files to your computer.
+2.  If you have a Github account, download and install the Github desktop application. Make sure you are logged in to the application. Then click the green "Clone or Download" button and select "Open in Desktop" and follow the instructions to clone (copy) the files to your computer.
 
-Also you should allocate a directory for the data that will be downloaded in the code that has at least 2 GB of open space. This should be used as the data dirctory (**data.dir**) in the code.
+Also you should allocate a directory for the data that will be downloaded in the code that has at least 2.5 GB of open space. This should be used as the data directory (**data.dir**) in the code.
 
 Chapter 1
 ---------
@@ -60,9 +60,10 @@ In chapter 3, we install the necessary packages that we will use throughout this
   install.packages('lmtest')
   install.packages('plm')
   install.packages('scales')
+  install.packages('GGally')
 ```
 
-After you have installed the above libraries you can move on to the code for chapter 5.
+After you have installed the above libraries you can move on to the code for Chapter 5.
 
 Chapter 4
 ---------
@@ -72,9 +73,9 @@ No Code
 Chapter 5
 ---------
 
-In chapter 5 we gather data from a variety of sources for the two case studies that will run in parallel to this book. The code below will download and unzip the necessary data to reproduce the case studies used in this book. This data will also be used to create the example plots and tables throughout the book. The user will have to specify a particular directory in which the data will be located. A code directory (the directory in which you downloaded the code from the Introduction chapter) will also need to be specified.
+In Chapter 5 we gather data from a variety of sources for the two case studies that will run in parallel to this book. The code below will download and unzip the necessary data to reproduce the case studies used in this book. This data will also be used to create the example plots and tables throughout the book. The user will have to specify a particular directory in which the data will be located. A code directory (the directory in which you downloaded the code from the Introduction chapter) will also need to be specified.
 
-Please note that, depending on your internet speed, the initial downloading of the files may take some time. Note that once the raw files are downloaded, the code will recognize their existance and not download them again if you run the code a second time, so long as you do not move the files from their downloaded location. Also, you will need at least 2.5 GB of space[2] in the directory that you indicate in the **data.dir** parameter below.
+Please note that, depending on your internet speed, the initial downloading of the files may take some time. Note that once the raw files are downloaded, the code will recognize their existence and not download them again if you run the code a second time, so long as you do not move the files from their downloaded location. Also, you will need at least 2.5 GB of space[2] in the directory that you indicate in the **data.dir** parameter below.
 
 ### Gathering the Data
 
@@ -105,7 +106,7 @@ We now check to see if the GIS shapefile of the Seattle Police Department Beat D
   }  
 ```
 
-We then check to see if a separate directory for the beats data exists. If it doesn't we create it. We then unzip the **beats.zip** file into the new *beats* directory.
+We then check to see if a separate directory for the police beats data exists. If it doesn't we create it. We then unzip the **beats.zip** file into the new *beats* directory.
 
 ``` r
   # Create a directory for beats data if one doesn't exist
@@ -125,7 +126,7 @@ Next, we download the property parcel (cadastre) shapefile (if not done so in th
   if(!file.exists(file.path(data.dir, 'raw_zip_files', 'parcel_shapefile.zip'))){
     
     # If it doesn't, then download
-    download.file(url=paste0('ftp://ftp.kingcounty.gov/gis-web/web/',
+    download.file(url=paste0('ftp://ftp.kingcounty.gov/gis-web/',
                              'GISData/parcel_SHP.zip'), 
                   destfile=file.path(data.dir, 'raw_zip_files', 'parcel_shapefile.zip'))
   }
@@ -140,7 +141,7 @@ Next, we download the property parcel (cadastre) shapefile (if not done so in th
         exdir=file.path(data.dir, 'geographic'))
 ```
 
-Finally, we gather the county assessor data. This includes sales transactions, information about the land parcel and information about the residential buildings. Before we download any data we create a sub-directory called *assessor* if one doesn't already exist.
+We then gather the county assessor data. This includes sales transactions, information about the land parcel and information about the residential buildings. Before we download any data we create a sub-directory called *assessor* if one doesn't already exist.
 
 ``` r
   # Create a directory if one doesn't exist
@@ -201,7 +202,7 @@ We then do the same for the parcel and the residential building (resbldg) inform
         exdir=file.path(data.dir, 'assessor'))
 ```
 
-We then add the crime report statisitics from the City of Seattle, downloading them into the 'crime' directory.
+Next, we add the crime report statistics from the City of Seattle, downloading them into the 'crime' directory.
 
 ``` r
   # Create a directory for assessor data if one doesn't exist
@@ -215,7 +216,7 @@ We then add the crime report statisitics from the City of Seattle, downloading t
                 destfile=file.path(data.dir, 'crime', 'seattle_crime.csv' ))
 ```
 
-And finally, we download the pre-analyzed twitter sentiment data from the REAIABook Github site and place in the 'tweets' directory.
+And finally, we download the pre-analyzed Twitter sentiment data from the REAIABook Github site and place in the 'tweets' directory.
 
 ``` r
   # Create a directory for assessor data if one doesn't exist
@@ -232,7 +233,7 @@ And finally, we download the pre-analyzed twitter sentiment data from the REAIAB
 Chapter 6
 ---------
 
-Chapter 6 discusses data management. In the code below we move the raw, downloaded tabular data into a database format, adding unique identifiers in the process. For the geo-spatial data we convert the shapefiles to an R data objects and re-project the coordinates to match a standard coordinate reference system format.
+Chapter 6 discusses data management. In the code below we move the raw, downloaded tabular data into a database format, adding unique identifiers in the process. For the geo-spatial data we convert the shapefiles to R data objects and re-project the coordinates to match a standard coordinate reference system (CRS) format.
 
 We begin the process by loading a number of packages or libraries that will be needed to complete this process. These packages were installed on your machine with the code from Chapter 3 above. These packages are developed by third-party users to augment the R language and represent one of the great benefits of using R.
 
@@ -249,10 +250,10 @@ Next, the user must enter the directory where the data is stored, **data.dir** a
 
 ``` r
   data.dir <- 'c:/temp/'             # For Example
-  code.dir <- 'c:/code/REAIA_Book/'  # For Example
+  code.dir <- 'c:/code/reaiaBook/'  # For Example
 ```
 
-We load in a set of custom functions that have been developed to help with the data integration and cleaning process.
+We load in a set of custom functions that have been developed to help with the data management process.
 
 ``` r
  source(file.path(code.dir, 'custom_functions.R'))
@@ -264,7 +265,7 @@ We also create a name and path for the database into which we'll integrate all o
   data.db <- file.path(data.dir, 'seattleCaseStudy.db')
 ```
 
-### Manage Assessors data
+### Manage Assessor's data
 
 To better manage the various assessor's data files -- the sales, parcel and residential building information -- we combine them into a single SQLite database. This also allows for greater portability of the files. This same database will contain the various iterations of the cleaned sales data as well. The **convertCSVtoSQLite()** function is a custom function that we have developed for the task of combining various CSV files into a single SQLite database. If you don't want to see the progress of the process you can change the *verbose* argument to FALSE.
 
@@ -280,8 +281,8 @@ To better manage the various assessor's data files -- the sales, parcel and resi
                                   'EXTR_Parcel.csv',
                                   'EXTR_Resbldg.csv'),
                       tableNames=c('Sales',
-                                     'Parcel',
-                                     'ResBldg'),
+                                   'Parcel',
+                                   'ResBldg'),
                       overWrite=TRUE,
                       verbose=TRUE,
                       writeRowNames=FALSE)
@@ -333,7 +334,7 @@ Second, we create a vector showing the count or number of times each of the dupl
   names(uid.suffix) <- NULL
 ```
 
-We then add these counts (suffix) to the sales data. Those with a UID that is unique receive a 0. Finally, we add the suffix value to the original UID to make an actual unique identifier. The suffix field is removed.
+We then add these counts (suffix) to the sales data. Those with a UID that is unique receive a 0. Finally, we add the suffix value to the original UID to make an actual unique identifier. The suffix field is then removed.
 
 ``` r
   # Apply suffix to sales.data
@@ -356,9 +357,9 @@ We write this data back to the database, removing the old table first.
   dbWriteTable(db.conn, 'Sales', sales.data, row.names=FALSE)
 ```
 
-#### Parcel and res bldg data unique identifiers
+#### Parcel and Residential Building data unique identifiers
 
-Here we add unique identifiers to the King County Assessors parcel and residential building tabular data. The unique identifiers (**pinx**) are simply an extension of the County's parcel identification numbers (PINs) where we add two leading '.'s in order to avoid dropped leading zeros in future uses. A custom function call **buildPinx()** is used to accomplish this. Full code for the **buildPinx()** function can be found in the *custom\_functions.R* file.
+Here we add unique identifiers to the King County Assessor's parcel and residential building tabular data. The unique identifiers (**pinx**) are simply an extension of the County's parcel identification numbers (PINs) where we add two leading '.'s in order to avoid dropped leading zeros in future uses. A custom function call **buildPinx()** is used to accomplish this. Full code for the **buildPinx()** function can be found in the *custom\_functions.R* file.
 
 We start by reading the raw parcel tabular data, creating the **pinx** unique identifier and then writing it back to the database.
 
@@ -413,7 +414,7 @@ We start by loading the parcel shapefile from the King County GIS department int
 We then transform the coordinate reference system to match the other spatial data we will use later.
 
 ``` r
-  parcels <- st_transform(parcels, 4326)
+  parcels <- st_transform(parcels, crs=4326)
 ```
 
 We then extract the centroid of each parcel polygon and conver this to a simple features data frame. We add the parcel identification number to each point as the unique identifier.
@@ -445,7 +446,7 @@ First we load the crime data from the .csv file downloaded from the City of Seat
   crime.data <- read.csv(file.path(data.dir, 'crime', 'seattle_crime.csv'))
 ```
 
-We then convert all of the field names to lower case and rename the unique identifier field to a simpler name, uid.
+We then convert all of the field names to lower case and rename the unique identifier field to a simpler name, **uid**.
 
 ``` r
   # Convert to lower case
@@ -501,7 +502,7 @@ We begin by reading in the police beat boundaries as a simple features polygon o
 We then transform the coordinate reference system.
 
 ``` r
-  beats <- st_transform(beats, 4326)
+  beats <- st_transform(beats, crs=4326)
 ```
 
 As we will work with other spatial packages in later analyses, we also convert simple features (sf) object to a an *sp* object (an earlier form of spatial handling in R). To this, we add the beat numbers as a unique identifier.
@@ -525,14 +526,14 @@ We then also convert the police beat coverage into a simple data frame format (f
                                              beats.sp@data$id)]
 ```
 
-Finally, we save all three object types of the beat polygon data to an r workspace for easier loading later on.
+Finally, we save all three object types of the beat polygon data to an R workspace for easier loading later on.
 
 ``` r
   save(beats, beats.sp, beats.spf, 
        file= file.path(data.dir, 'geographic', 'beats.Rdata'))
 ```
 
-We finish the manage stage of our analysis by closing the connection to the database.
+We finish the *Manage* stage of our analysis by closing the connection to the database.
 
 ``` r
   dbDisconnect(db.conn)
@@ -559,7 +560,7 @@ We begin with a set of prelimnary commands. Specifically, we load the necessary 
  ## Set data and code directory
  
   data.dir <- 'c:/temp/'                      # For example
-  code.dir <- 'c:/code/research/REAIA_book/'  # For example
+  code.dir <- 'c:/code/REAIAbook/'  # For example
   
  ## Load custom source files
   
@@ -578,13 +579,13 @@ We then set the path to our active database and establish a connection to it.
 
 #### Preparing Sales Data
 
-We start the process by preparing the sales data. First, we load the data from the database
+We start the process by preparing the sales data. First, we load the data from the database.
 
 ``` r
   sales.data <- dbReadTable(db.conn, 'Sales')
 ```
 
-First we filter out observations that are missing critical information; parcel identification numbers and sale prices. Those with missing sale price or prices of 0 are usually non arm's length transactions which are not relevant to our analysis.
+Then we filter out observations that are missing critical information; parcel identification numbers and sale prices. Those with missing sale price or prices of 0 are usually non arm's length transactions which are not relevant to our analysis.
 
 ``` r
   # Filter those missing PIN numbers
@@ -594,7 +595,7 @@ First we filter out observations that are missing critical information; parcel i
   sales.data <- dplyr::filter(sales.data, SalePrice > 0)
 ```
 
-Next we perform a number of options of options to transform and then filter on the sale date. We begin by re-ordering the sales date into a standard month/date/year format and then convert this to a 'date' data type within R.
+Next we perform a number of operations to transform and then filter on the sale date. We begin by re-ordering the sales date into a standard month/date/year format and then convert this to a 'date' data type within R.
 
 ``` r
   # Re-order date field
@@ -607,7 +608,7 @@ Next we perform a number of options of options to transform and then filter on t
                               sales.date = as.Date(doc.date, "%d%m%Y"))
 ```
 
-Then we create a sales year field
+Then we create a sales year field.
 
 ``` r
   sales.data <- dplyr::mutate(.data=sales.data,
@@ -649,13 +650,13 @@ We then add fields denoting the quarter of sales (Q1 to Q4) and the month of sal
 
 We now turn to other transformation and filters.
 
-First, we convert the two-piece parcel identification number (PIN) into a single value, **pinX** that will link to the ID created for the geographical shapefile.
+First, we convert the two-piece parcel identification number (PIN) into a single value, **pinx** that will link to the ID created for the geographical shapefile.
 
 ``` r
   sales.data <- buildPinx(X=sales.data)
 ```
 
-Some property show an abnormally high number of transactions. We filter out any property that has transacted more than five time during the study period. (For all custom functions see the *custom\_functions.R* file.)
+Some properties show an abnormally high number of transactions. We filter out any property that has transacted more than five time during the study period. (For all custom functions see the *custom\_functions.R* file.)
 
 ``` r
   sales.data <- buildTransCount(x.sales=sales.data, 
@@ -834,7 +835,7 @@ We then do the same for the residential building data
 
 Next, we perform a number of preparation exercises on the residential building data.
 
-First, we sort the data by the individual building number, remove any properties with more than one building and then remove any remains observations that do not indicate the primary building (data error). We finish by removing the buildling number field.
+First, we sort the data by the individual building number, remove any properties with more than one building and then remove any remaining observations that do not indicate the primary building (data error). We finish by removing the building number field.
 
 ``` r
   # Sort by building number
@@ -1003,7 +1004,7 @@ Next, we calculate the areal extent (in square miles) of each beat area. We do t
   poly.area <- poly.area * (68.99 ^ 2)
 ```
 
-We then add these areal measurements to the beats sp object.
+We then add these areal measurements to the beats *sp* object.
 
 ``` r
   beats.sp@data$size <- poly.area
@@ -1055,8 +1056,8 @@ Next we extract the latitude and longitude values from the jointly held lat/long
 
 ``` r
   # Transform: Create Separate Lat/long Columns 
-  parcel.centroids$longitude <- unlist(lapply(parcel.centroids$parcel.centroids, function(x) x[1]))
-  parcel.centroids$latitude <- unlist(lapply(parcel.centroids$parcel.centroids, function(x) x[2]))
+  parcel.centroids$longitude <- unlist(lapply(parcel.centroids$geometry, function(x) x[1]))
+  parcel.centroids$latitude <- unlist(lapply(parcel.centroids$geometry, function(x) x[2]))
 ```
 
 We then save the parcel centroid data to a new R workspace for future use.
@@ -1072,6 +1073,9 @@ Now we integrate (join) the sales data and the parcel centroid data by the **pin
   sales.data <- merge(sales.data, 
                       parcel.centroids[ , c('pinx', 'beat', 'longitude', 'latitude')],
                       by='pinx')
+
+  # Remove the geometry field
+  sales.data$geometry <- NULL
 ```
 
 Now that we have limited the sales to the City of Seattle only, we re-classify the sales data zoning variables into five simple classes.
@@ -1108,7 +1112,7 @@ First, we extract just the date values and convert to the R date format.
                                 occurred.date.or.date.range.start, 1, 10), '%m/%d/%Y'))
 ```
 
-We then extract the time of the reported crime and convert to a 24 hour format.
+We then extract the time of the reported crime and convert to a 24-hour format.
 
 ``` r
   # Extract time from time+date field                           
@@ -1138,7 +1142,7 @@ We then convert the crime date field to the R date format.
   crime.data$crime.date <- as.Date(crime.data$crime.date)
 ```
 
-Next, we re-classify the crime types from the 29 large categories into four: violent, property, behavior and traffic. All smaller categories are considered other.
+Next, we re-classify the crime types from the 29 large categories into four: violent, property, behavior and traffic. All smaller categories are considered "other".
 
 ``` r
   # Create Crime Groups
@@ -1231,7 +1235,7 @@ We then add a count of each crime type to the sale observation
     sales.data$crime.other[j] <- length(which(cx.data$crime.type == 'other'))
 ```
 
-After every 100 sales complete we output the progress (this could be removed from code it will not impact performance)
+After every 100 sales complete we output the progress (this could be removed from code it will not impact performance).
 
 ``` r
     if (j %% 100 == 0){
@@ -1239,7 +1243,7 @@ After every 100 sales complete we output the progress (this could be removed fro
     }
 ```
 
-We close the loop
+We close the loop.
 
 ``` r
   }
@@ -1247,9 +1251,9 @@ We close the loop
 
 #### Prepare Sentiment Tweets
 
-We now prepare the sentiment tweet data
+We now prepare the sentiment tweet data.
 
-First we load in from the database
+First we load it in from the database.
 
 ``` r
   tweet.data <- dbReadTable(db.conn, 'SentimentTweets')
@@ -1281,7 +1285,7 @@ Next, we intersect the two in order to determine which tweets fall within the ci
   tweet.sp <- tweet.sp[which(in.seattle), ]
 ```
 
-The sentiment score are integer values ranging from -5 to 5, based on their sentiment. For the purposes of judging local sentiment we will only consider positive and negative sentiment, thus we must filter and transform the data.
+The sentiment scores are integer values ranging from -5 to 5, with low numbers being negative sentiment. For the purposes of judging local sentiment we will only consider positive and negative sentiment, thus we must filter and transform the data.
 
 We start by removing all neutral tweet (sentiment of 0) from the data.
 
@@ -1295,7 +1299,7 @@ Then we convert all tweet to simply negative (-1) or positive (1)
   twsent.sp@data$SS <- ifelse(twsent.sp@data$SentimentScore < 0, -1, 1)
 ```
 
-Finally, we extract just the data portion of the tweet sp object.
+Finally, we extract just the data portion of the tweet *sp* object.
 
 ``` r
   twsent <- twsent.sp@data
@@ -1303,9 +1307,9 @@ Finally, we extract just the data portion of the tweet sp object.
 
 ### Write Data Back to Database
 
-Finally, we write the non-spatial data back to the data base.
+Finally, we write the non-spatial data back to the database.
 
-First we convert the date fields in the sales and crime date back to simple character strings for storage purposes
+To do so we first convert the date fields in the sales and crime date back to simple character strings for storage purposes.
 
 ``` r
   # Convert sales.date to character to write to database
@@ -1335,7 +1339,7 @@ Next, we write the crime data, overwriting the previous data.
   dbWriteTable(db.conn, 'Crime', crime.data, row.names=FALSE)
 ```
 
-And, finally, we write the tweet sentiment data, again overwriting the previous data
+And, finally, we write the tweet sentiment data, again overwriting the previous data.
 
 ``` r
   # Check if exists, if so overwrite
@@ -1377,7 +1381,7 @@ Then we set the paths to the code and the data
 
 ``` r
   data.dir <- 'c:/temp/'                      # For Example
-  code.dir <- 'c:/code/research/REAIA_book/'  # For Example
+  code.dir <- 'c:/code/research/reaiabook/'  # For Example
 ```
 
 We load the custom functions
@@ -2527,7 +2531,7 @@ Then we set the paths to the data and code.
 
 ``` r
   data.dir <- 'c:/temp/'
-  code.dir <- 'c:/code/research/REAIA_book/'
+  code.dir <- 'c:/code/research/reaiabook/'
 ```
 
 We then load the custom functions.
@@ -2962,7 +2966,7 @@ Then we set the paths to the data and code.
 
 ``` r
   data.dir <- 'c:/temp/'
-  code.dir <- 'c:/code/research/REAIA_book/'
+  code.dir <- 'c:/code/research/reaiabook/'
 ```
 
 We then load the custom functions.
