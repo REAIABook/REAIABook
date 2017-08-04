@@ -43,7 +43,7 @@
   if (!file.exists(file.path(data.dir, 'raw_zip_files', 'parcel_shapefile.zip'))){
     
     # If it doesn't, then download
-    download.file(url=paste0('ftp://ftp.kingcounty.gov/gis-web/web/',
+    download.file(url=paste0('ftp://ftp.kingcounty.gov/gis-web/',
                              'GISData/parcel_SHP.zip'), 
                   destfile=file.path(data.dir, 'raw_zip_files', 'parcel_shapefile.zip'))
   }

@@ -31,7 +31,7 @@ There are two primary ways to get the code and data from this site.
 
 2. If you have a Github account, download and install the Github desktop application.  Make sure you are logged in to the application.  Then click the green "Clone or Download" button and select "Open in Desktop" and follow the instructions to clone (copy) the files to your computer. 
 
-Also you should allocate a directory for the data that will be downloaded in the code that has at least 2 GB of open space.  This should be used as the data directory (**data.dir**) in the code. 
+Also you should allocate a directory for the data that will be downloaded in the code that has at least 2.5 GB of open space.  This should be used as the data directory (**data.dir**) in the code. 
 
 ## Chapter 1
 
@@ -65,10 +65,11 @@ In chapter 3, we install the necessary packages that we will use throughout this
   install.packages('lmtest')
   install.packages('plm')
   install.packages('scales')
+  install.packages('GGally')
 
 ```
 
-After you have installed the above libraries you can move on to the code for chapter 5. 
+After you have installed the above libraries you can move on to the code for Chapter 5. 
 
 ## Chapter 4
 
@@ -76,9 +77,9 @@ No Code
 
 ## Chapter 5
 
-In chapter 5 we gather data from a variety of sources for the two case studies that will run in parallel to this book. The code below will download and unzip the necessary data to reproduce the case studies used in this book. This data will also be used to create the example plots and tables throughout the book. The user will have to specify a particular directory in which the data will be located.  A code directory (the directory in which you downloaded the code from the Introduction chapter) will also need to be specified.  
+In Chapter 5 we gather data from a variety of sources for the two case studies that will run in parallel to this book. The code below will download and unzip the necessary data to reproduce the case studies used in this book. This data will also be used to create the example plots and tables throughout the book. The user will have to specify a particular directory in which the data will be located.  A code directory (the directory in which you downloaded the code from the Introduction chapter) will also need to be specified.  
 
-Please note that, depending on your internet speed, the initial downloading of the files may take some time. Note that once the raw files are downloaded, the code will recognize their existance and not download them again if you run the code a second time, so long as you do not move the files from their downloaded location. Also, you will need at least 2.5 GB of space^[This can be reduced by deleted the downloaded ZIP files after extraction.] in the directory that you indicate in the **data.dir** parameter below.  
+Please note that, depending on your internet speed, the initial downloading of the files may take some time. Note that once the raw files are downloaded, the code will recognize their existence and not download them again if you run the code a second time, so long as you do not move the files from their downloaded location. Also, you will need at least 2.5 GB of space^[This can be reduced by deleted the downloaded ZIP files after extraction.] in the directory that you indicate in the **data.dir** parameter below.  
 
 ### Gathering the Data
 
@@ -116,7 +117,7 @@ We now check to see if the GIS shapefile of the Seattle Police Department Beat D
 
 ```
 
-We then check to see if a separate directory for the beats data exists.  If it doesn't we create it.  We then unzip the **beats.zip** file into the new *beats* directory.  
+We then check to see if a separate directory for the police beats data exists.  If it doesn't we create it.  We then unzip the **beats.zip** file into the new *beats* directory.  
 
 ```{r eval=FALSE}
 
@@ -131,7 +132,7 @@ We then check to see if a separate directory for the beats data exists.  If it d
 
 ```
 
-Next, we  download the property parcel (cadastre) shapefile (if not done so in the past).  We then create a separate sub-directory for the geographic data (if not already present) and then and unzip it into the *geographic* sub-directory.  
+Next, we download the property parcel (cadastre) shapefile (if not done so in the past).  We then create a separate sub-directory for the geographic data (if not already present) and then and unzip it into the *geographic* sub-directory.  
 
 ```{r eval=FALSE}
 
@@ -139,7 +140,7 @@ Next, we  download the property parcel (cadastre) shapefile (if not done so in t
   if(!file.exists(file.path(data.dir, 'raw_zip_files', 'parcel_shapefile.zip'))){
     
     # If it doesn't, then download
-    download.file(url=paste0('ftp://ftp.kingcounty.gov/gis-web/web/',
+    download.file(url=paste0('ftp://ftp.kingcounty.gov/gis-web/',
                              'GISData/parcel_SHP.zip'), 
                   destfile=file.path(data.dir, 'raw_zip_files', 'parcel_shapefile.zip'))
   }
@@ -155,7 +156,7 @@ Next, we  download the property parcel (cadastre) shapefile (if not done so in t
 
 ```
 
-Finally, we gather the county assessor data.  This includes sales transactions, information about the land parcel and information about the residential buildings.  Before we download any data we create a sub-directory called *assessor* if one doesn't already exist.  
+We then gather the county assessor data.  This includes sales transactions, information about the land parcel and information about the residential buildings.  Before we download any data we create a sub-directory called *assessor* if one doesn't already exist.  
 
 ```{r eval=FALSE}
 
@@ -224,7 +225,7 @@ We then do the same for the parcel and the residential building (resbldg) inform
 
 ```
 
-We then add the crime report statisitics from the City of Seattle, downloading them into the 'crime' directory. 
+Next, we add the crime report statistics from the City of Seattle, downloading them into the 'crime' directory. 
 
 ```{r eval=FALSE} 
 
@@ -240,7 +241,7 @@ We then add the crime report statisitics from the City of Seattle, downloading t
 
 ```
 
-And finally, we download the pre-analyzed twitter sentiment data from the REAIABook Github site and place in the 'tweets' directory. 
+And finally, we download the pre-analyzed Twitter sentiment data from the REAIABook Github site and place in the 'tweets' directory. 
 
 ```{r eval=FALSE} 
 
@@ -258,7 +259,7 @@ And finally, we download the pre-analyzed twitter sentiment data from the REAIAB
 
 ## Chapter 6
 
-Chapter 6 discusses data management.  In the code below we move the raw, downloaded tabular data into a database format, adding unique identifiers in the process.  For the geo-spatial data we convert the shapefiles to an R data objects and re-project the coordinates to match a standard coordinate reference system format. 
+Chapter 6 discusses data management.  In the code below we move the raw, downloaded tabular data into a database format, adding unique identifiers in the process.  For the geo-spatial data we convert the shapefiles to R data objects and re-project the coordinates to match a standard coordinate reference system (CRS) format. 
 
 We begin the process by loading a number of packages or libraries that will be needed to complete this process.  These packages were installed on your machine with the code from Chapter 3 above.  These packages are developed by third-party users to augment the R language and represent one of the great benefits of using R.  
 
@@ -282,7 +283,7 @@ Next, the user must enter the directory where the data is stored, **data.dir** a
 
 ```
 
-We load in a set of custom functions that have been developed to help with the data integration and cleaning process. 
+We load in a set of custom functions that have been developed to help with the data management process. 
 
 ```{r eval=FALSE}
 
@@ -298,7 +299,7 @@ We also create a name and path for the database into which we'll integrate all o
 
 ```
 
-### Manage Assessors data
+### Manage Assessor's data
 
 To better manage the various assessor's data files -- the sales, parcel and residential building information -- we combine them into a single SQLite database.  This also allows for greater portability of the files.  This same database will contain the various iterations of the cleaned sales data as well.  The **convertCSVtoSQLite()** function is a custom function that we have developed for the task of combining various CSV files into a single SQLite database. If you don't want to see the progress of the process you can change the *verbose* argument to FALSE. 
 
@@ -315,8 +316,8 @@ To better manage the various assessor's data files -- the sales, parcel and resi
                                   'EXTR_Parcel.csv',
                                   'EXTR_Resbldg.csv'),
                       tableNames=c('Sales',
-                                     'Parcel',
-                                     'ResBldg'),
+                                   'Parcel',
+                                   'ResBldg'),
                       overWrite=TRUE,
                       verbose=TRUE,
                       writeRowNames=FALSE)
@@ -377,7 +378,7 @@ Second, we create a vector showing the count or number of times each of the dupl
   
 ```
 
-We then add these counts (suffix) to the sales data.  Those with a UID that is unique receive a 0. Finally, we add the suffix value to the original UID to make an actual unique identifier.  The suffix field is removed. 
+We then add these counts (suffix) to the sales data.  Those with a UID that is unique receive a 0. Finally, we add the suffix value to the original UID to make an actual unique identifier.  The suffix field is then removed. 
 
 ```{r eval=FALSE}
 
@@ -404,9 +405,9 @@ We write this data back to the database, removing the old table first.
   
 ```
 
-#### Parcel and res bldg data unique identifiers
+#### Parcel and Residential Building data unique identifiers
 
-Here we add unique identifiers to the King County Assessors parcel and residential building tabular data.  The unique identifiers (**pinx**) are simply an extension of the County's parcel identification numbers (PINs) where we add two leading '.'s in order to avoid dropped leading zeros in future uses. A custom function call **buildPinx()** is used to accomplish this.  Full code for the **buildPinx()** function can be found in the *custom_functions.R* file.
+Here we add unique identifiers to the King County Assessor's parcel and residential building tabular data.  The unique identifiers (**pinx**) are simply an extension of the County's parcel identification numbers (PINs) where we add two leading '.'s in order to avoid dropped leading zeros in future uses. A custom function call **buildPinx()** is used to accomplish this.  Full code for the **buildPinx()** function can be found in the *custom_functions.R* file.
 
 We start by reading the raw parcel tabular data, creating the **pinx** unique identifier and then writing it back to the database.  
 
@@ -470,7 +471,7 @@ We then transform the coordinate reference system to match the other spatial dat
 
 ```{r eval=FALSE}
 
-  parcels <- st_transform(parcels, 4326)
+  parcels <- st_transform(parcels, crs=4326)
   
 ```
 
@@ -509,7 +510,7 @@ First we load the crime data from the .csv file downloaded from the City of Seat
 
 ```
   
-We then convert all of the field names to lower case and rename the unique identifier field to a simpler name, uid.  
+We then convert all of the field names to lower case and rename the unique identifier field to a simpler name, **uid**.  
   
 ```{r eval=FALSE}  
   
@@ -574,7 +575,7 @@ We then transform the coordinate reference system.
 
 ```{r eval=FALSE}  
 
-  beats <- st_transform(beats, 4326)
+  beats <- st_transform(beats, crs=4326)
 
 ```
 
@@ -603,7 +604,7 @@ We then also convert the police beat coverage into a simple data frame format (f
   
 ```
 
-Finally, we save all three object types of the beat polygon data to an r workspace for easier loading later on. 
+Finally, we save all three object types of the beat polygon data to an R workspace for easier loading later on. 
 
 ```{r eval=FALSE}  
 
@@ -612,7 +613,7 @@ Finally, we save all three object types of the beat polygon data to an r workspa
 
 ```
 
-We finish the manage stage of our analysis by closing the connection to the database. 
+We finish the *Manage* stage of our analysis by closing the connection to the database. 
 
 ```{r eval=FALSE}  
 

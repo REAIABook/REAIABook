@@ -41,8 +41,8 @@
                                   'EXTR_Parcel.csv',
                                   'EXTR_Resbldg.csv'),
                       tableNames=c('Sales',
-                                     'Parcel',
-                                     'ResBldg'),
+                                   'Parcel',
+                                   'ResBldg'),
                       overWrite=TRUE,
                       verbose=TRUE,
                       writeRowNames=FALSE)
@@ -139,7 +139,7 @@
                      quiet=TRUE)
 
   # Convert to appropriate CRS
-  parcels <- st_transform(parcels, 4326)
+  parcels <- st_transform(parcels, crs=4326)
   
   # Extract centroid Lat longs
   parcel.centroids <- st_centroid(parcels)
@@ -189,7 +189,7 @@
                    quiet=TRUE)
   
   # Transform the Coordinate Reference System  
-  beats <- st_transform(beats, 4326)
+  beats <- st_transform(beats, crs=4326)
   
   # Convert beats shapefile from 'sf' to 'sp'
   beats.sp <- as(beats, 'Spatial')
