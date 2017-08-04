@@ -18,7 +18,7 @@
  ## Set data and code directory
 
   data.dir <- 'c:/temp/' 
-  code.dir <- 'c:/code/research/REAIA_Book/'
+  code.dir <- 'c:/code/REAIABook/'
 
  ## Load custom source files
 
