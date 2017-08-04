@@ -15,11 +15,12 @@
   library(RSQLite)
   library(RODBC)
   library(GGally)
+  library(ggplot2)
 
  ## Set data and code directory
 
   data.dir <- 'c:/temp/'
-  code.dir <- 'c:/code/research/REAIA_book/'
+  code.dir <- 'c:/code/REAIAbook/'
 
  ## Load custom source files
 
@@ -450,7 +451,8 @@
   sales.data$baths <- as.numeric(as.character(sales.data$baths))
   sales.data$bldg.grade <- as.numeric(as.character(sales.data$bldg.grade))
 
-  library(GGally)  
+ ## Correlation Plot
+  
   ggcorr(sales.data[,c('sale.price', 'tot.sf', 'lot.size','beds', 'baths',
                        'age', 'bldg.grade')], label=TRUE)
   
@@ -583,6 +585,30 @@
   sales.data$view.score <- rowSums(view.scores)
 
 ### Mapping ------------------------------------------------------------------------------  
+  
+  # Make the base map
+  base.map <- ggplot(sales.data,
+                     aes(x=longitude, 
+                         y=latitude)) +
+    geom_point(color='gray40', size=.1)
+  
+  base.map <- base.map + geom_path(data=beats.spf,
+                                   aes(x=long, y=lat, group=id),
+                                   color='gray20')
+  base.map
+  
+  # Make a price map
+  price.map <- ggplot(sales.data,
+                      aes(x=longitude,
+                          y=latitude, 
+                          color=log(sale.price))) +
+    scale_color_gradient2(low='red', high='blue', midpoint=12.5)+
+    geom_point()+
+    geom_path(data=beats.spf,
+              aes(x=long, y=lat, group=id),
+              color='gray20')
+  price.map
+  
   # Property use (Detached or townhome)
   use.map <- ggplot(sales.data,
                     aes(x=longitude, 
@@ -825,7 +851,7 @@
               color='gray20')
   garb.map  
   
-### Label outliers -----------------------------------------------------------------------
+### Label discordant values --------------------------------------------------------------
   
   sales.data$discordant <- 0
   sales.data$disc.fields <- ""
@@ -933,7 +959,9 @@
   
   # Close
   dbDisconnect(db.conn)
-  
+
+##########################################################################################
+##########################################################################################
   
 
   
