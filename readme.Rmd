@@ -66,7 +66,9 @@ In chapter 3, we install the necessary packages that we will use throughout this
   install.packages('plm')
   install.packages('scales')
   install.packages('GGally')
-
+  install.packages('ggplot2')
+  install.packages('scales')
+  
 ```
 
 After you have installed the above libraries you can move on to the code for Chapter 5. 
@@ -1613,16 +1615,16 @@ First we load the necessary libraries
 
 ```
 
-Then we set the paths to the code and the data
+Then we set the paths to the code and the data.
 
 ```{r eval=FALSE}  
 
   data.dir <- 'c:/temp/'                      # For Example
-  code.dir <- 'c:/code/research/reaiabook/'  # For Example
+  code.dir <- 'c:/code/reaiabook/'            # For Example
 
 ```
 
-We load the custom functions
+We load the custom functions.
 
 ```{r eval=FALSE}  
 
@@ -1662,7 +1664,7 @@ Then we load in the three spatial representations of the Seattle Police Beat dat
 
 ```
 
-We then convert the sales dates back into R format
+We then convert the sales dates back into R format.
 
 ```{r eval=FALSE}  
 
@@ -1692,7 +1694,7 @@ Finally, we ensure that the categorial variables are represented as such.
 
 We start with exploring the univariate properties of the sales data.
 
-First, we get a list of the field types
+First, we get a list of the field types.
 
 ```{r eval=FALSE}  
 
@@ -1725,7 +1727,7 @@ Next, we compute a set of summary statistic for the factor (categorical) variabl
 
 Given the summary statistics, we now filter out a number of observations that appear to be errors of value or mislabeled transactions that were not eliminated earlier.
 
-First we look at the lowest sales prices and remove all of those under $50,000
+First we look at the lowest sales prices and remove all of those under $50,000.
 
 ```{r eval=FALSE}  
 
@@ -1753,15 +1755,14 @@ And then we remove those homes with more than 10 bedrooms.
   
 ```{r eval=FALSE}  
   
-  # Examine lowest number of bedrooms
+  # Examine highest number of bedrooms
   tail(sales.data$beds[order(sales.data$beds)], 300)
 
-  # Filter those greater htan 10
+  # Filter those greater than 10
   sales.data <- dplyr::filter(sales.data, beds <= 10)
   
 ```
 
-  
 #### Univariate Visual/Informal Exploration
 
 We now make visual explanation of most of the numeric fields.  For continuous variables we use density plots and for the categorical or ordinal we use bar plots. 
