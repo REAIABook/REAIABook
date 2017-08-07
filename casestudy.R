@@ -25,11 +25,12 @@
   library(lmtest)
   library(gstat)
   library(scales)
+  library(ggplot2)
 
  ## Set data and code directory
 
   data.dir <- 'c:/temp/'
-  code.dir <- 'c:/code/research/REAIA_book/'
+  code.dir <- 'c:/code/reaiabook/'
 
  ## Load custom source files
 
@@ -76,7 +77,7 @@
   
   # Building Weights Matrix
   swm <- listw2U(nb2listw(nbList, 
-                          glist = lapply(nbDists, dwf),
+                          glist=lapply(nbDists, dwf),
                           style="W",
                           zero.policy=T))
   
@@ -92,18 +93,18 @@
   # Create table of crime counts by beat
   beat.crime <- dplyr::group_by(crime.data, zone.beat) %>% 
     dplyr::summarize(
-      violent=length(which(crime.type =='violent')),
+      violent=length(which(crime.type == 'violent')),
       property=length(which(crime.type == 'property')),
       behavior=length(which(crime.type == 'behavior')),
-      traffic = length(which(crime.type == 'traffic')),
-      other = length(which(crime.type == 'other')),
-      all= n())
+      traffic=length(which(crime.type == 'traffic')),
+      other=length(which(crime.type == 'other')),
+      all=n())
   
   # Add blank appreciation and sales count fields
   beat.crime$appr <- 0
   beat.crime$sales <- 0
   
-  # Estimate a model at for each beat
+  # Estimate a model for each beat
   for(b in 1:nrow(beat.crime)){
     
     # Select sales
@@ -125,7 +126,7 @@
       
       # Building Weights Matrix
       swm <- listw2U(nb2listw(nbList, 
-                              glist = lapply(nbDists, dwf), 
+                              glist=lapply(nbDists, dwf), 
                               style="W",
                               zero.policy=T))
       
@@ -149,7 +150,8 @@
                                      data=beat.sp,
                                      swm, 
                                      method="spam", 
-                                     zero.policy=TRUE), silent=T)
+                                     zero.policy=TRUE), 
+                          silent=T)
       
       # Extract coefficients
       if(class(beat.se) == 'sarlm'){
@@ -251,18 +253,22 @@
   
 ### Sentiment analysis -------------------------------------------------------------------  
   
-  tweet.sp <- SpatialPointsDataFrame(cbind(tweet.data$longitude, tweet.data$latitude),
+ ## Convert tweet data to SPDF
+  
+  # Raw conversion
+  tweet.sp <- SpatialPointsDataFrame(coords=cbind(tweet.data$longitude, 
+                                                  tweet.data$latitude),
                                      data=tweet.data)
+  
+  # Fix the coordinate reference system
   proj4string(tweet.sp) <- CRS(proj4string(beats.sp))
   
  ## Make plot of sentiment tweets
     
-  sent.map <- ggplot() + 
-    geom_polygon(data=beats.spf, aes(x=long, y=lat, group=beat), 
+  sent.pts.map <- ggplot() + 
+    geom_polygon(data=beats.spf, aes(x=long, y=lat, group=id), 
                  color='gray40', fill='gray80')+
-    # coord_cartesian(xlim=c(min(sales.data$longitude), max(sales.data$longitude)),
-    #                 ylim=c(min(sales.data$latitude), max(sales.data$latitude))) +
-     geom_point(data=tweet.data, 
+    geom_point(data=tweet.data, 
                 aes(x=longitude, y=latitude, color=as.factor(SS)), 
                 size=2) +
     scale_color_manual(values=c('blue', 'red'),
@@ -277,8 +283,8 @@
  ## Create sentiment surface
   
   # Build surface
-  sent.surf <- point2Surface(twsent.sp, 
-                             twsent.sp$SS, 
+  sent.surf <- point2Surface(tweet.sp, 
+                             tweet.sp$SS, 
                              res=.004, 
                              clip=seattle.bound, 
                              idp.val=5)
@@ -302,7 +308,7 @@
           legend.key.width=unit(3,'cm'),
           axis.text=element_blank(),
           axis.ticks = element_blank(),
-          plot.title = element_text(hjust = 0.5))
+          plot.title = element_text(hjust = 0.5)) 
   
  ## Calculate local housing appreciation  
     
@@ -311,8 +317,8 @@
   gwr.spec <- update(gwr.spec, ~ . + as.factor(qtr))
   
   # Create spatial points data set
-  gwr.data <- SpatialPointsDataFrame(cbind(sales.data$longitude,
-                                           sales.data$latitude),
+  gwr.data <- SpatialPointsDataFrame(coords=cbind(sales.data$longitude,
+                                                  sales.data$latitude),
                                      data=sales.data)
   
   # Run the local GWR models
@@ -334,7 +340,7 @@
                        labels=c('0%', '1%', '2%', '3%', '4%', '5%', '6%', '7%', '8%')) +
     xlab('Sentiment Score') +
     ylab('Appreciation Rate in 2016\n') +
-    # coord_cartesian(ylim=c(-.07, .17)) + 
+    coord_cartesian(ylim=c(-.01, .09)) + 
     ggtitle('Local House Appreciation vs Sentiment') +
     theme(plot.title = element_text(hjust = 0.5))
   

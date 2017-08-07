@@ -606,11 +606,20 @@ We then also convert the police beat coverage into a simple data frame format (f
   
 ```
 
+We also create a simple boundary file that outlines the non-water policy beats. 
+
+```{r eval=FALSE}  
+
+  in.city <- beats.sp[!beats.sp@data$beat %in% c('99', 'H1', 'H3'),]
+  seattle.bound <- gUnaryUnion(in.city)
+  
+```
+
 Finally, we save all three object types of the beat polygon data to an R workspace for easier loading later on. 
 
 ```{r eval=FALSE}  
 
-  save(beats, beats.sp, beats.spf, 
+  save(beats, beats.sp, beats.spf, seattle.bound,
        file= file.path(data.dir, 'geographic', 'beats.Rdata'))
 
 ```
@@ -3363,6 +3372,7 @@ As always, we begin with a set of preliminary commands.  First, we load the nece
   library(lmtest)
   library(gstat)
   library(scales)
+  library(ggplot2)
 
 ```
 
@@ -3431,7 +3441,7 @@ We begin the case study analysis by looking at the relationship between crime an
   
 ```
 
-Noting that spatial autocorrelation was heavily present before, we then re-estimate the 'crime' model with a spatial error specification. To do so, we convert the data to a spatial points data frame, build a spatial weights matrix and then esimate the spatial error model. 
+Noting that spatial autocorrelation was heavily present before, we then re-estimate the 'crime' model with a spatial error specification. To do so, we convert the data to a spatial points data frame, build a spatial weights matrix and then estimate the spatial error model. 
 
 ```{r eval=FALSE}  
 
@@ -3448,7 +3458,7 @@ Noting that spatial autocorrelation was heavily present before, we then re-estim
   
   # Build Spatial Weights Matrix
   swm <- listw2U(nb2listw(nbList, 
-                          glist = lapply(nbDists, dwf),
+                          glist=lapply(nbDists, dwf),
                           style="W",
                           zero.policy=T))
   
@@ -3469,12 +3479,12 @@ We begin by building a table containing the count of crimes of each type per pol
 
   beat.crime <- dplyr::group_by(crime.data, zone.beat) %>% 
     dplyr::summarize(
-      violent=length(which(crime.type =='violent')),
+      violent=length(which(crime.type == 'violent')),
       property=length(which(crime.type == 'property')),
       behavior=length(which(crime.type == 'behavior')),
-      traffic = length(which(crime.type == 'traffic')),
-      other = length(which(crime.type == 'other')),
-      all= n())
+      traffic=length(which(crime.type == 'traffic')),
+      other=length(which(crime.type == 'other')),
+      all=n())
 
 ```
 
@@ -3489,7 +3499,7 @@ To do so, we start by assigning each beat a blank value for appreciation rate an
 
 ```
 
-Next, we loop through each beat
+Next, we loop through each beat.
 
 ```{r eval=FALSE}  
 
@@ -3505,7 +3515,7 @@ Within each iteration, we begin by selecting only those sales within the beat.
 
 ```
 
-If there are at least 100 sales in the beat we proceed, if not we give that beat a 0 and disqualify it from the anlaysis. 
+If there are at least 100 sales in the beat we proceed, if not we give that beat a 0 and disqualify it from the analysis. 
 
 ```{r eval=FALSE}  
 
@@ -3514,7 +3524,7 @@ If there are at least 100 sales in the beat we proceed, if not we give that beat
 ```      
       
 We convert the data to a spatial points data frame and then re-build a spatial weights matrix.      
-      
+     
 ```{r eval=FALSE}  
       
       # Create spatial points data frame
@@ -3530,7 +3540,7 @@ We convert the data to a spatial points data frame and then re-build a spatial w
       
       # Building Weights Matrix
       swm <- listw2U(nb2listw(nbList, 
-                              glist = lapply(nbDists, dwf), 
+                              glist=lapply(nbDists, dwf), 
                               style="W",
                               zero.policy=T))
 ```      
@@ -3546,7 +3556,7 @@ We then remove the sales data from the model specification and add quarterly dum
 
 ```      
       
-If there are no waterfront properties in this beat, we remove this variable from the model specification.  If there are only one type of view in the beat we remove that variable as well.       
+If there are no waterfront properties in this beat, we remove this variable from the model specification.  If there is only one type of view in the beat we remove that variable as well.       
       
 ```{r eval=FALSE}  
       
@@ -3570,7 +3580,8 @@ Then we estimate a price model for each beat.
                                      data=beat.sp,
                                      swm, 
                                      method="spam", 
-                                     zero.policy=TRUE), silent=T)
+                                     zero.policy=TRUE), 
+                          silent=T)
 ```      
       
 If the model estimation succeeds, we then extract the coefficient indicating the change in prices from 2016 Q1 to 2016 Q4.       
@@ -3710,12 +3721,13 @@ Finally, we plot the relationship between price appreciation and crimes per squa
 
 The final section of our case study looks at the relationship between local sentiment (as measured by Twitter) and localized house price changes. 
       
-We begin by converting the tweet data to a SpatialPointsDataFrame.  This includes changing the coordinate reference system.       
+We begin by converting the tweet data to a Spatial Points Data Frame.  This includes changing the coordinate reference system.       
       
 ```{r eval=FALSE}  
   
-  # Conver to SPDF
-  tweet.sp <- SpatialPointsDataFrame(cbind(tweet.data$longitude, tweet.data$latitude),
+  # Convert to SPDF
+  tweet.sp <- SpatialPointsDataFrame(coords=cbind(tweet.data$longitude, 
+                                                  tweet.data$latitude),
                                      data=tweet.data)
 
   # Fix the coordinate reference system
@@ -3729,8 +3741,8 @@ We then make a simple map showing the location of the sentiment-scored tweets.
   
  ## Make plot of sentiment tweets
     
-  sent.map <- ggplot() + 
-    geom_polygon(data=beats.spf, aes(x=long, y=lat, group=beat), 
+  sent.pts.map <- ggplot() + 
+    geom_polygon(data=beats.spf, aes(x=long, y=lat, group=id), 
                  color='gray40', fill='gray80')+
     # coord_cartesian(xlim=c(min(sales.data$longitude), max(sales.data$longitude)),
     #                 ylim=c(min(sales.data$latitude), max(sales.data$latitude))) +
@@ -3745,6 +3757,7 @@ We then make a simple map showing the location of the sentiment-scored tweets.
     theme(legend.position='bottom', 
           axis.text=element_blank(),
           axis.ticks = element_blank())
+
 ```      
 
 Next, we take the point data tweets and convert them to a surface (areal coverage) using a custom point to surface function.  (Detailed code on the point to surface process can be found in the *custom_functions.R* file.)
@@ -3806,8 +3819,8 @@ We then convert the sales data into a SpatialPointsDataFrame object.
       
 ```{r eval=FALSE}  
   
-  gwr.data <- SpatialPointsDataFrame(cbind(sales.data$longitude,
-                                           sales.data$latitude),
+  gwr.data <- SpatialPointsDataFrame(coords=cbind(sales.data$longitude,
+                                                  sales.data$latitude),
                                      data=sales.data)
 ```      
       
@@ -3843,7 +3856,7 @@ And finally, we plot the relationship between the local sentiment scores and the
                        labels=c('0%', '1%', '2%', '3%', '4%', '5%', '6%', '7%', '8%')) +
     xlab('Sentiment Score') +
     ylab('Appreciation Rate in 2016\n') +
-    # coord_cartesian(ylim=c(-.07, .17)) + 
+    coord_cartesian(ylim=c(-.07, .17)) + 
     ggtitle('Local House Appreciation vs Sentiment') +
     theme(plot.title = element_text(hjust = 0.5))
 
