@@ -573,6 +573,14 @@ We begin by reading in the police beat boundaries as a simple features polygon o
 
 ```
 
+Next, we remove three beats that are water beats or outside of city limits. 
+
+```{r eval=FALSE}  
+
+ beats <- beats[!beats$beat %in% c('99', 'H1', 'H3'), ]
+
+```  
+
 We then transform the coordinate reference system.
 
 ```{r eval=FALSE}  
@@ -610,8 +618,7 @@ We also create a simple boundary file that outlines the non-water policy beats.
 
 ```{r eval=FALSE}  
 
-  in.city <- beats.sp[!beats.sp@data$beat %in% c('99', 'H1', 'H3'),]
-  seattle.bound <- gUnaryUnion(in.city)
+ seattle.bound <- gUnaryUnion(beats.sp)
   
 ```
 

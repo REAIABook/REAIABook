@@ -188,8 +188,11 @@
   beats <- st_read(file.path(data.dir, 'beats', 'SPD_BEATS_WGS84.shp'), 
                    quiet=TRUE)
   
+  # Remove beats outside of city land
+  beats <- beats[!beats$beat %in% c('99', 'H1', 'H3'), ]
+  
   # Transform the Coordinate Reference System  
-  beats <- st_transform(beats, crs=4326)
+  beats <- st_transform(beats, 4326)
   
   # Convert beats shapefile from 'sf' to 'sp'
   beats.sp <- as(beats, 'Spatial')
@@ -202,8 +205,11 @@
   beats.spf$beat <- beats.sp@data$beat[match(beats.spf$id, 
                                              beats.sp@data$id)]
   
+  # Create a Seattle Boundary File
+  seattle.bound <- gUnaryUnion(beats.sp)
+  
   # Save all beats shapefiles as an R object for loading later
-  save(beats, beats.sp, beats.spf, 
+  save(beats, beats.sp, beats.spf, seattle.bound, 
        file= file.path(data.dir, 'geographic', 'beats.Rdata'))
 
 ### End session --------------------------------------------------------------------------  
