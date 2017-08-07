@@ -295,12 +295,15 @@
                         sentiment=sent.surf@data$var1.pred)
   
   # Make a map
-  sent.map <- ggplot(surf.df, aes(x=long, y=lat, z=sentiment)) +
-    geom_tile(aes(fill = sentiment), alpha=.7) +
-    scale_fill_gradient2(low=muted('red'), high=muted('blue'),
+  sent.map <- ggplot() +
+    geom_tile(data=surf.df, 
+              aes(x=long, y=lat, fill = sentiment), 
+              alpha=.7) +
+    scale_fill_gradient(low='black', high='white',
                          name='Sentiment    ',
                          breaks=c(-.75, 0, .75),
                          labels=c('Negative', 'Neutral', 'Positive')) + 
+    geom_path(data=seattle.bound, aes(x=long, y=lat), size=2) +
     ylab('') + 
     xlab('') +
     ggtitle('Sentiment in Seattle') +
@@ -330,6 +333,25 @@
   
   # Add these to the data frame of surfact values
   surf.df$appr <- appr.coef
+  
+  # Make a map
+  appr.map <- ggplot() +
+    geom_tile(data=surf.df, 
+              aes(x=long, y=lat, fill = appr), 
+              alpha=.7) +
+    scale_fill_gradient(low='black', high='white',
+                        name='Appreciation    ',
+                        breaks=c(-.15, 0, .15),
+                        labels=c('Negative', 'Neutral', 'Positive')) + 
+    geom_path(data=seattle.bound, aes(x=long, y=lat), size=1) +
+    ylab('') + 
+    xlab('') +
+    ggtitle('Local Price Appreciation in Seattle') +
+    theme(legend.position='bottom',
+          legend.key.width=unit(3,'cm'),
+          axis.text=element_blank(),
+          axis.ticks = element_blank(),
+          plot.title = element_text(hjust = 0.5)) 
   
  ## Plot relationship
   

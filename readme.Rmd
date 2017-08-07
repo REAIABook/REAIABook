@@ -3788,12 +3788,15 @@ We then make a map showing the localized sentiment in each area of Seattle.
 
 ```{r eval=FALSE}  
 
-  sent.map <- ggplot(surf.df, aes(x=long, y=lat, z=sentiment)) +
-    geom_tile(aes(fill = sentiment), alpha=.7) +
-    scale_fill_gradient2(low=muted('red'), high=muted('blue'),
+  sent.map <- ggplot() +
+    geom_tile(data=surf.df, 
+              aes(x=long, y=lat, fill = sentiment), 
+              alpha=.7) +
+    scale_fill_gradient(low='black', high='white',
                          name='Sentiment    ',
                          breaks=c(-.75, 0, .75),
                          labels=c('Negative', 'Neutral', 'Positive')) + 
+    geom_path(data=seattle.bound, aes(x=long, y=lat), size=2) +
     ylab('') + 
     xlab('') +
     ggtitle('Sentiment in Seattle') +
@@ -3801,7 +3804,8 @@ We then make a map showing the localized sentiment in each area of Seattle.
           legend.key.width=unit(3,'cm'),
           axis.text=element_blank(),
           axis.ticks = element_blank(),
-          plot.title = element_text(hjust = 0.5))
+          plot.title = element_text(hjust = 0.5)) 
+
 ```      
 
 Next, we estimate the local price appreciation at the same scale as the sentiment surface.  To do so, we use a Geographycally Weighted Regression (GWR).
@@ -3845,6 +3849,31 @@ Next, we extract the coefficients for price appreciation (from Q1 to Q4) from th
 
 ```      
       
+We then plot a map.
+
+```{r eval=FALSE}  
+
+    appr.map <- ggplot() +
+    geom_tile(data=surf.df, 
+              aes(x=long, y=lat, fill = appr), 
+              alpha=.7) +
+    scale_fill_gradient(low='black', high='white',
+                        name='Appreciation    ',
+                        breaks=c(-.15, 0, .15),
+                        labels=c('Negative', 'Neutral', 'Positive')) + 
+    geom_path(data=seattle.bound, aes(x=long, y=lat), size=1) +
+    ylab('') + 
+    xlab('') +
+    ggtitle('Local Price Appreciation in Seattle') +
+    theme(legend.position='bottom',
+          legend.key.width=unit(3,'cm'),
+          axis.text=element_blank(),
+          axis.ticks = element_blank(),
+          plot.title = element_text(hjust = 0.5)) 
+
+```
+
+
 And finally, we plot the relationship between the local sentiment scores and the local price appreciation.       
       
 ```{r eval=FALSE}  
