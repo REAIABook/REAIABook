@@ -2862,7 +2862,7 @@ Then we set the paths to the data and code.
 ```{r eval=FALSE}  
 
   data.dir <- 'c:/temp/'
-  code.dir <- 'c:/code/research/reaiabook/'
+  code.dir <- 'c:/code/reaiabook/'
   
 ```
 
@@ -2906,7 +2906,7 @@ Next, we transform the sales date to the R date format.
 
 #### Basic Price Modeling 
 
-We begin the price modeling be specificy a basic linear model; one that includes most of the variables (generally non-spatial) that could possibly influence sales price.
+We begin the price modeling be specifying a basic linear model; one that includes most of the variables (generally non-spatial) that could possibly influence sales price.
 
 ```{r eval=FALSE}  
 
@@ -2962,7 +2962,7 @@ Next, we combine the traffic noise levels 2 and 3 into level 2
 
 ```
 
-And then we combine the six smallest view.best categories into a single other view level. 
+And then we combine the six smallest **view.best** categories into a single other view level. 
 
 ```{r eval=FALSE}  
 
@@ -3005,7 +3005,7 @@ Given the information from the stepwise and BMA models together with the variabl
 
 We now run some diagnostics on the base model. 
 
-We start by testing for multicollinearity.  we check the variance inflation factors (VIF) and find that none of them exceed 10, the standard warning level. 
+We start by testing for multicollinearity.  We check the variance inflation factors (VIF) and find that none of them exceed 10, the standard warning level. 
 
 ```{r eval=FALSE}  
 
@@ -3026,7 +3026,7 @@ Next, we test for heteroskedasticity with two Breusch-Pagan tests, one studentiz
 
 ```
 
-Given the presence of heteroskedasticity, we then apply White's correction to the standard errors to see if any of the previously significant variables drop out.  
+Given the presence of heteroskedasticity, we then apply White's correction to the standard errors to see if any of the previously significant variables undergo large changes in this significance levels. 
 
 ```{r eval=FALSE}  
 
@@ -3036,13 +3036,13 @@ Given the presence of heteroskedasticity, we then apply White's correction to th
 
 Next, we test for spatial autocorrelation in the residuals of our model.
 
-We begin by converting the sales data to a spatial points data frame.
+We begin by converting the sales data to a Spatial Points Data Frame (from the *sp* package).
 
 ```{r eval=FALSE}  
 
-  sales.sp <- SpatialPointsDataFrame(cbind(sales.data$longitude,
-                                           sales.data$latitude),
-                                     sales.data)
+  sales.sp <- SpatialPointsDataFrame(coords=cbind(sales.data$longitude,
+                                                  sales.data$latitude),
+                                     data=sales.data)
 
 ```
 
@@ -3061,7 +3061,7 @@ We then build a spatial weights matrix of the observations, using an inverse dis
   
   # Build the SWM
   swm <- listw2U(nb2listw(nbList, 
-                          glist = lapply(nbDists, dwf),
+                          glist=lapply(nbDists, dwf),
                           style="W",
                           zero.policy=T))
 
@@ -3117,7 +3117,7 @@ We do so by first specificying the geographically weighted model (bandwidth=.1)
 
 ```    
   
-We then examine the results of the GWR and find some spatial heterogeniety.
+We then examine the results of the GWR and find some spatial heterogeneity.
 
 ```{r eval=FALSE}  
 
@@ -3184,7 +3184,7 @@ Finally, we re-specify the above as a simple ordinary least squares model.
 
 Next, we test for sensitivity to discordant values.  
 
-First, we test for sensitivity to all discordant values.  Because we are changing the sample of observations we must specificy the spatial weights matrix before re-estimating the model. 
+First, we test for sensitivity to all discordant values.  Because we are changing the sample of observations we must re-specify the spatial weights matrix before re-estimating the model. 
 
 ```{r eval=FALSE}  
   
@@ -3199,19 +3199,20 @@ First, we test for sensitivity to all discordant values.  Because we are changin
    
    # Building Weights Matrix
    swm <- listw2U(nb2listw(nbList, 
-                           glist = lapply(nbDists, dwf),
+                           glist=lapply(nbDists, dwf),
                            style="W",
                            zero.policy=T))
    
    # Estimate Model
    mod.sens.d1 <- errorsarlm(as.formula(base.lm),
                              data=d1.data,
-                             swm, method="spam", 
+                             swm,
+                             method="spam", 
                              zero.policy=TRUE)
 
 ```   
    
-Next, we just remove the Univariate discordant observations and re-estimate.    
+Next, we just remove the univariate discordant observations and re-estimate.    
    
 ```{r eval=FALSE}  
 
@@ -3228,7 +3229,7 @@ Next, we just remove the Univariate discordant observations and re-estimate.
    
    # Building Weights Matrix
    swm <- listw2U(nb2listw(nbList, 
-                           glist = lapply(nbDists, dwf), 
+                           glist=lapply(nbDists, dwf), 
                            style="W",
                            zero.policy=T))
   
@@ -3257,7 +3258,7 @@ Finally, we just remove those observations with discordancy in the dependent var
    
    # Building Weights Matrix
    swm <- listw2U(nb2listw(nbList, 
-                           glist = lapply(nbDists, dwf), 
+                           glist=lapply(nbDists, dwf), 
                            style="W",
                            zero.policy=T))
    
@@ -3309,7 +3310,7 @@ Next, we re-specify the spatial weights matrix.
      
      # Building Weights Matrix
      swm <- listw2U(nb2listw(nbList, 
-                             glist = lapply(nbDists, dwf),
+                             glist=lapply(nbDists, dwf),
                              style="W",
                              zero.policy=T))
 ```
@@ -3319,8 +3320,10 @@ And then re-estimate the model.
 ```{r eval=FALSE}  
 
      cv.list[[i]] <- errorsarlm(as.formula(base.lm),
-                               data=cv.data,
-                               swm, method="spam", zero.policy=TRUE)
+                                data=cv.data,
+                                swm, 
+                                method="spam", 
+                                zero.policy=TRUE)
     
   }
 
@@ -3328,7 +3331,7 @@ And then re-estimate the model.
 
 #### Save workspace
 
-Instead of writing to the database, we save the entire workspace for use later.
+Instead of writing to the database, we save the entire R workspace for use later.
 
 ```{r eval=FALSE}  
 

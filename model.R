@@ -28,7 +28,7 @@
  ## Set data and code directory
 
   data.dir <- 'c:/temp/'
-  code.dir <- 'c:/code/research/REAIA_book/'
+  code.dir <- 'c:/code/reaiabook/'
 
  ## Load custom source files
 
@@ -131,9 +131,9 @@
  ## Spatial Autocorrelation
 
   # Convert to a SpatialPointsDataFrame
-  sales.sp <- SpatialPointsDataFrame(cbind(sales.data$longitude,
-                                           sales.data$latitude),
-                                     sales.data)
+  sales.sp <- SpatialPointsDataFrame(coords=cbind(sales.data$longitude,
+                                                  sales.data$latitude),
+                                     data=sales.data)
 
   # Develop a spatial weights matrix (SWM)
  
@@ -148,7 +148,7 @@
   
   # Build the SWM
   swm <- listw2U(nb2listw(nbList, 
-                          glist = lapply(nbDists, dwf),
+                          glist=lapply(nbDists, dwf),
                           style="W",
                           zero.policy=T))
   
@@ -233,14 +233,16 @@
    
    # Building Weights Matrix
    swm <- listw2U(nb2listw(nbList, 
-                           glist = lapply(nbDists, dwf),
+                           glist=lapply(nbDists, dwf),
                            style="W",
                            zero.policy=T))
    
    # Estimate Model
    mod.sens.d1 <- errorsarlm(as.formula(base.lm),
                              data=d1.data,
-                             swm, method="spam", zero.policy=TRUE)
+                             swm, 
+                             method="spam", 
+                             zero.policy=TRUE)
   
   ## Extract only those with no univariate discordancy
    d2.id <- grep('UV:', sales.sp@data$disc.type)
@@ -254,7 +256,7 @@
    
    # Building Weights Matrix
    swm <- listw2U(nb2listw(nbList, 
-                           glist = lapply(nbDists, dwf), 
+                           glist=lapply(nbDists, dwf), 
                            style="W",
                            zero.policy=T))
   
@@ -277,7 +279,7 @@
    
    # Building Weights Matrix
    swm <- listw2U(nb2listw(nbList, 
-                           glist = lapply(nbDists, dwf), 
+                           glist=lapply(nbDists, dwf), 
                            style="W",
                            zero.policy=T))
    
@@ -311,14 +313,16 @@
      
      # Building Weights Matrix
      swm <- listw2U(nb2listw(nbList, 
-                             glist = lapply(nbDists, dwf),
+                             glist=lapply(nbDists, dwf),
                              style="W",
                              zero.policy=T))
      
      # Restimate and add to capture list
      cv.list[[i]] <- errorsarlm(as.formula(base.lm),
-                               data=cv.data,
-                               swm, method="spam", zero.policy=TRUE)
+                                data=cv.data,
+                                swm, 
+                                method="spam", 
+                                zero.policy=TRUE)
     
    }
 
